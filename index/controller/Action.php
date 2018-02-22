@@ -51,7 +51,7 @@ class Action extends Controller
     public function getpwd($str){
         return md5(sha1($str));
     }
-    public static function logger($str,$name='',$lev=3,$name='info'){
+    public static function logger($str,$name='',$lev=3){
         if(!is_array($str)){
             $inputData = $str;
         }else{
