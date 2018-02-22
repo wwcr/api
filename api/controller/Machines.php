@@ -169,4 +169,14 @@ class Machines extends Action
         return $count;
     }
 
+    public function redisTest(){
+        $redis = new \Redis();
+        $redis->connect(config('redis.host'), config('redis.hostport'));
+
+        $redis->set('test2','hello word2');
+        $name = $redis->get('test2');
+
+        echo $name;
+    }
+
 }
