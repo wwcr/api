@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="__PUBLIC__/static/front/js/jquery-1.11.1.min.js" type="text/javascript"></script>
+<body>
+	<select id = 'province'>
+	{volist name='province.result' id='pro'}
+		<option value="{$pro.proID}" >{$pro.proName}</option>
+		{/volist}
+	</select>
+	
+	<select id = 'city' style="display:none">
+	</select>
+	<!-- 邪恶的分割线========================== -->
+	<select id = 'brand'>
+	{volist name='brand' id='bra'}
+		<option value="{$bra.id}" >{$bra.big_ppname}</option>
+		{/volist}
+	</select>
+	<!-- 车系 -->
+	<select id = 'series' style="display:none">
+	</select>
+	<!-- 车型 -->
+	<select id = 'car' style="display:none">
+	</select>
+<!-- 车型 -->
+	<!-- <select id = 'car_year' style="display:none">
+	</select> -->
+
+<!-- 车况 -->
+	<select id = 'car_status' >
+	<option value="1" >优秀</option>
+	<option value="2" >一般</option>
+	<option value="3" >较差</option>
+	</select>
+<!-- 车辆用途 -->
+	<select id = 'purpose' >
+	<option value="1" >自用</option>
+	<option value="2" >公务商用</option>
+	<option value="3" >营运</option>
+	</select>
+
+	 年份<input type="text" name="年份" id='year' />
+	 月份<input type="text" name="月份" id = 'month'/>
+	 公里数<input type="text" name="公里数" id = 'mile'/>
+	 购买价格<input type="text" name="购买价格" id = 'price'/>
+
+	 <br>
+ <button type="button" id='button'>提交</button>
+<div id='show'>
+	<p id='area'>地区/价格</p>
+</div>
+	<script type="text/javascript">
+	// 城市
+	$("select#province").change(function(){
+     var pid = $(this).val();
+         $.ajax({
+      type:'post',
+      url:"{:url('Api/city')}",
+      data:{
+      	'id':pid
+    },
+    success:function(data){
+      var data = $.parseJSON(data);
+       $('#city').css('display', '');
+       $(data).each(function(i,n){
+       $("#city").append("<option value='"+n.cityID+"'>"+n.cityName+"</option>");
+       });
+    }
+    });
+ });
+
+	$("select#brand").change(function(){
+     var bid = $(this).val();
+     // console.log(bid);
+         $.ajax({
+      type:'post',
+      url:"{:url('Api/series')}",
+      data:{
+      	'id':bid
+    },
+    success:function(data){
+      var data = $.parseJSON(data);
+      // console.log(data);
+       $('#series').css('display', '');
+       $(data).each(function(i,n){
+       $("#series").append("<option value='"+n.xlid+"'>"+n.xlname+"</option>");
+       });
+    }
+    });
+ });
+
+	$("select#series").change(function(){
+     var sid = $(this).val();
+     console.log(sid);
+         $.ajax({
+      type:'post',
+      url:"{:url('Api/car_list')}",
+      data:{
+      	'id':sid
+    },
+    success:function(data){
+      var data = $.parseJSON(data);
+      // console.log(data);
+       $('#car').css('display', '');
+       $(data).each(function(i,n){
+       $("#car").append("<option value='"+n.id+"'>"+n.cxname+"</option>");
+       });
+    }
+    });
+ });
+
+
+	$("#button").click(function(){
+     var car_status = $("#car_status  option:selected").val();
+
+     var purpose = $("#purpose  option:selected").val();
+     var city = $("#city  option:selected").val();
+     var province = $("#province  option:selected").val();
+     console.log(province);
+     var car = $("#car  option:selected").val();
+     // console.log(car);
+     var year = $("#year").val();
+     var month = $("#month").val();
+     var mile = $("#mile").val();
+     var price = $("#price").val();
+         $.ajax({
+      type:'post',
+      url:"{:url('Api/assess')}",
+      data:{
+      	'car_status':car_status,
+      	'purpose':purpose,
+      	'city':city,
+      	'province':province,
+      	'car':car,
+      	'year':year,
+      	'month':month,
+      	'mile':mile,
+      	'price':price
+    },
+    success:function(data){
+      var data = $.parseJSON(data);
+      	console.log(data);
+      	console.log(data.est_price_area);
+
+       $(data.est_price_area).each(function(i,n){
+       $("#show").append("<p>"+n.price+'/'+n.area+"</p>"); 
+       });
+       // $(data.est_price_result).each(function(i,n){
+       $("#show").append("<p>"+data.est_price_result[0]+'收购价格'+"</p>"); 
+       $("#show").append("<p>"+data.est_price_result[1]+'个人交易价格'+"</p>"); 
+       $("#show").append("<p>"+data.est_price_result[2]+'卖出价格'+"</p>"); 
+       // });
+    }
+    });
+ });
+
+
+	</script>
+</body>
+</html>
