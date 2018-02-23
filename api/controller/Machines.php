@@ -4,7 +4,7 @@ use app\index\controller\Action;
 use app\index\module\machine;
 use think\Db;
 use app\api\validate;
-
+use think\session\driver\Redis;
 class Machines extends Action
 {
     protected $machine;
@@ -169,14 +169,33 @@ class Machines extends Action
         return $count;
     }
 
+//测试phpredis
     public function redisTest(){
         $redis = new \Redis();
         $redis->connect(config('redis.host'), config('redis.hostport'));
 
-        $redis->set('test2','hello word2');
-        $name = $redis->get('test2');
+        $redis->set('test','hello worddddd');
+        $name = $redis->get('test');
 
         echo $name;
+    }
+
+    /**
+     * 将session保存到session中
+     * @Author   jfeng
+     * 使用时需要修改session在config中的配置
+     *
+     */
+    public function sessionTest(){
+        $redis = new Redis;
+        $redis->open();
+
+        ini_set('session.save_handler', 'redis');
+        ini_set('session.save_path', 'tcp://127.0.0.1:6379');
+        session('openid', '123456'); //设置session
+        echo '设置session-->' . session('openid') . '</br>';
+
+        echo $redis->read($_COOKIE['PHPSESSID']);
     }
 
 }
