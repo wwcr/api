@@ -362,6 +362,7 @@ class Api extends Action
             echo "请求失败";
         }
      }
+
     //  public function wz_city(){//违章城市
     //  	$curl = new Curl();
     //     $url = "http://v.juhe.cn/wz/citys";
@@ -556,5 +557,63 @@ class Api extends Action
             $data['all_money'] = $data['each_money'] * $month;
             echo json_encode($data);
         }
+    }
+    public function content_up(){
+        $data['title'] = input('post.title');
+        $data['content'] = input('post.content');
+        $data['uid'] = input('post.uid');
+        $data['release_time'] = time();//时间
+        // var_dump($data);
+        $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
+        // echo $fileName;
+        $files = request()->file('imgFiles');
+		    foreach($files as $file){
+		  //       // 移动到框架应用根目录/public/uploads/ 目录下
+		        $info = $file->rule('uniqid')->move($fileName . DS . 'public' . DS . 'upload');
+		        if($info){
+		            // 成功上传后 获取上传信息
+		            // 输出 jpg
+		            // echo $info->getExtension(); 
+		            // 输出 42a79759f284b767dfcb2a0197904287.jpg
+		            $data['pic'] =$data['pic'].'^'.$info->getFilename();
+		            
+		            // echo $info->getFilename(); 
+		        }else{
+		            // 上传失败获取错误信息
+		            echo $file->getError();
+		        }    
+    }
+	    $res = Db::name('chatinfo')->insert($data);
+	    if($res){
+	    	self::AjaxReturn('','上传成功',1);
+	    }else{
+	    	self::AjaxReturn('','提交失败',0);
+	    }
+    }
+    public function get_all_contentlist(){
+    	header("Access-Control-Allow-Origin:*");
+        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+    	$data = Db::name('chatinfo')
+    		->alias('c')
+            ->join('user u','np_chatinfo.uid=np_user.user_id','left')
+            ->order('np_chatinfo.release_time')
+            ->field('u.user_mobile,u.user_header,c.*')
+            ->select();
+         self::AjaxReturn($data,'成功',1);
+    }
+    public function get_single_contentlist(){
+    	header("Access-Control-Allow-Origin:*");
+        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+    	$uid = input('post.uid');
+    	$data = Db::name('chatinfo')
+    		->alias('c')
+            ->join('user u','np_chatinfo.uid=np_user.user_id','left')
+            ->order('np_chatinfo.release_time')
+            ->field('u.user_mobile,u.user_header,c.*')
+            ->where('uid',$uid)
+            ->select();
+         self::AjaxReturn($data,'成功',1);
     }
 }

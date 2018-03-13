@@ -199,6 +199,10 @@ class Index extends Action
     }
      public function findcarnew(){
         if(self::$repost){
+        	$type = input('type');//判断是否签约用户
+        	if(!$type){
+        		$type = 1;
+        	}
             $insert['card_brand'] = input('card_brand');
             $insert['card_model'] = input('card_model');
             $insert['card_number'] = input('card_number').input('card_allnumber');
@@ -216,7 +220,7 @@ class Index extends Action
             $res = Db::name('findcard')->insertGetId($insert);
             if($res) {
                 $order = new order();
-                $order = $order->add(2,500,1);
+                $order = $order->add(2,450,1,$type);
                 if($order) {
                     $update = Db::name('findcard')
                         ->where(['find_id'=>$res])

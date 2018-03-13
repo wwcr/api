@@ -13,9 +13,9 @@ class pay{
      * @param $order
      * @return int|string
      */
-    public function add($order){
+    public function add($order,$type=1){
         $insert = array(
-            'pay_status'=>1,
+            'pay_status'=>$type,//type 2 已签约用户 不用支付
             'pay_time'=>'',
             'pay_order'=>$order
         );

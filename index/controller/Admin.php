@@ -113,6 +113,12 @@ class Admin extends Action
         }
     }
 
+    public function deleteArticle()//删除文章
+    {
+       $id = input('id');
+   		$res = Db::name('article')->where('article_id',$id)->delete();
+   		echo json_encode($res);
+    }
     //用户列表
     public function user()
     {
@@ -307,7 +313,6 @@ class Admin extends Action
             self::AjaxReturn($provinceId, '获取省份id失败', 0);
         }
     }
-
     public function getRelationUsers()
     {
         $userId = input('user_id');

@@ -21,11 +21,11 @@ class order extends model {
         }
         return self::$_instance;
     }
-    public function add($type=1,$price,$uid){
+    public function add($type=1,$price,$uid,$utype=1){
         $order = self::getOrder();
         //生成一条支付记录
         $pay = new pay();
-        $order_pay = $pay->add($order);
+        $order_pay = $pay->add($order,$utype);
         $insert = [
             'order_type'=>$type, //订单类型
             'order_number'=>$order, //订单号
@@ -47,6 +47,11 @@ class order extends model {
         ])->update([
             'order_price'=>(intval($price)*100)]
         );
+    }
+    public function get_price($order){
+        return Db::name('order')->where([
+            'order_number'=>$order
+        ])->select();
     }
     public function getlist($where,$limit,$type){
         if($type == 1){

@@ -54,7 +54,7 @@ class Order extends Action
     public function terrace(){
         $data = input();
         // $type = input('post.type');
-        
+        $type = input('type');//是否是签约用户
         if(!$data['ex_fid']){
             self::ajaxReturnError('寻车服务ID获取失败,请返回');
         }
@@ -71,6 +71,7 @@ class Order extends Action
            if($msg === true){
                unset($data['uid']);
                unset($data['token']);
+               unset($data['type']);
                $data['ex_addtime'] = getStrtime();
                $data['ex_uid'] = $this->uid;
                $data['ex_update'] = getStrtime();
@@ -81,7 +82,7 @@ class Order extends Action
                $data['ex_status'] = 0; //初始化未执行
                Db::startTrans();//启动事务
                //创建订单
-               $order = module\order::start()->add(3,$data['ex_money'],$this->uid);
+               $order = module\order::start()->add(3,$data['ex_money'],$this->uid,$type);
                if($order){
                    $data['ex_order'] = $order;
                    $reult = Db::name('exorder')->insertGetId($data);

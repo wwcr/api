@@ -50,13 +50,19 @@ class Pay extends Action
     public function notify(){
         p($_REQUEST);
     }
+    public function get_order_price($order){
+        $order = new module\order();
+        $res = $order->get_price($order);
+        return $res[0]['order_price'];
+    }
     public function wechat_pay(){//微信支付
          // echo 11111;
         $pay = new Wechat();
         $type = 1;
         $out_trade_no = input('post.order');
+        $total_fee = input('post.price')*100;
         // $res = $pay->unifiedOrder(3133454536456131313);//统一下单
-        $res = $pay->unifiedOrder($out_trade_no,$type);//统一下单
+        $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
         $res['mweb_url'] = $res['mweb_url'];
         echo json_encode($res);
         // $this->assign('data',$res);
@@ -195,5 +201,11 @@ class Pay extends Action
             }
         }
      }
+    }
+     public function query_ordertest(){//查询订单
+     $out_trade_no = 2018030710199504;
+     $pay = new Wechat();
+     $res = $pay->orderQuery($out_trade_no);
+    var_dump($res);
     }
 }
