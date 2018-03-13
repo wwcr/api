@@ -559,6 +559,9 @@ class Api extends Action
         }
     }
     public function content_up(){
+        header("Access-Control-Allow-Origin:*");
+        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $data['title'] = input('post.title');
         $data['content'] = input('post.content');
         $data['uid'] = input('post.uid');
