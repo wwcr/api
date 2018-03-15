@@ -18,6 +18,11 @@ class Api extends Action
 {   
     private $appkey = '743a9232f73942a9fa5a6645c3f1877e';
     private $wz_appkey = 'f99efbffea18d69350538e27f02a4a09'; //申请的全国违章查询APPKEY
+    public function _initialize(){
+        header("Access-Control-Allow-Origin:*");
+        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+    }
     public function index()
     {
         p(4);die;
@@ -48,9 +53,9 @@ class Api extends Action
 
     public function car_pinggu()
     {   
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         // $curl = new Curl();
         $pro_result = $this->province();
         $brand_result = $this->brand();
@@ -61,9 +66,9 @@ class Api extends Action
     public function province(){//获取车辆评估省份
         $curl = new Curl();
 //如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *  
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS"); 
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS"); 
         $url = "http://v.juhe.cn/usedcar/province";
         $params = array(
       "key" => $this->appkey,//应用APPKEY(应用详细页查询)
@@ -87,9 +92,9 @@ class Api extends Action
      public function provincetest(){//获取车辆评估省份
         $curl = new Curl();
 //如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *  
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS"); 
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS"); 
         $url = "http://v.juhe.cn/usedcar/province";
         $params = array(
       "key" => $this->appkey,//应用APPKEY(应用详细页查询)
@@ -134,9 +139,9 @@ class Api extends Action
         }
     }
     public function city(){
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $curl = new Curl();
         $pid = input('post.id');
         $url = "http://v.juhe.cn/usedcar/city";
@@ -160,9 +165,9 @@ class Api extends Action
     }
     public function brand($type = 1){
         $curl = new Curl();
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");   
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");   
         $car_type = $type == 1 ? 'passenger' : 'commercial';
         $url = "http://v.juhe.cn/usedcar/brand";
         $params = array(
@@ -193,9 +198,9 @@ class Api extends Action
         }
     }
      public function brandtest($type = 1){
-      header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+      // header("Access-Control-Allow-Origin:*");
+      //   header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+      //   header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $curl = new Curl();
         $car_type = $type == 1 ? 'passenger' : 'commercial';
         $url = "http://v.juhe.cn/usedcar/brand";
@@ -229,9 +234,9 @@ class Api extends Action
     }
      public function series(){//车系
         $curl = new Curl();
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         // $bid = 2000417;
         $bid = input('post.id');
         // echo $bid;
@@ -268,9 +273,9 @@ class Api extends Action
      }
      public function car_list(){//车型列表
         $curl = new Curl();
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $url = "http://v.juhe.cn/usedcar/car";
         // $sid = 20000227;
         $sid = input('post.id');
@@ -303,9 +308,9 @@ class Api extends Action
         }
      }
      public function car_year(){//车型列表
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $curl = new Curl();
         $url = "http://v.juhe.cn/usedcar/year";
         $cid = input('post.id');
@@ -330,9 +335,9 @@ class Api extends Action
         }
      }
      public function assess(){//车辆估值
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $curl = new Curl();
         $url = "http://v.juhe.cn/usedcar/assess";
         $city = input('post.city');
@@ -400,9 +405,9 @@ class Api extends Action
     //     }
     // }
  		public function newwz_city(){//违章城市
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
      	  $curl = new Curl();
         $url = "http://v.juhe.cn/wz/citys";
         $params = 'key='.$this->wz_appkey.'&format=2';
@@ -427,9 +432,9 @@ class Api extends Action
         }
    	 }
     public function getwz_city(){//违章城市
-      header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+      // header("Access-Control-Allow-Origin:*");
+      //   header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+      //   header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
      	$res = Db::name('wzsearch')->order('pro_code')->select();
         $data = [];
         foreach ($res as $key => $value) {
@@ -468,9 +473,9 @@ class Api extends Action
    	 }
 
      public function peccancy(){//违章查询
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
          $curl = new Curl();
         $url = "http://v.juhe.cn/wz/query";
         $city = input('post.city');
@@ -508,9 +513,9 @@ class Api extends Action
         }
      }
      public function get_finded_pic(){//已找到车辆的现场图片接口
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
      	$car_no = input('post.id');//接收车牌
       $res = Db::name('cardata')->where('car_card', $car_no)->find();
       // echo $res;
@@ -518,9 +523,9 @@ class Api extends Action
      	echo json_encode($res);
     }
     public function get_userinfo(){//已找到车辆的现场图片接口
-      header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+      // header("Access-Control-Allow-Origin:*");
+      //   header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+      //   header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
       $uid = input('post.uid');//接收车牌
       $res = Db::name('user')->where('user_id', $uid)->find();
       // echo $res;
@@ -559,33 +564,42 @@ class Api extends Action
         }
     }
     public function content_up(){
-        header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        // header("Access-Control-Allow-Origin:*");
+        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $data['title'] = input('post.title');
         $data['content'] = input('post.content');
         $data['uid'] = input('post.uid');
-        $data['release_time'] = time();//时间
-        // var_dump($data);
-        $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
-        // echo $fileName;
-        $files = request()->file('imgFiles');
-		    foreach($files as $file){
-		  //       // 移动到框架应用根目录/public/uploads/ 目录下
-		        $info = $file->rule('uniqid')->move($fileName . DS . 'public' . DS . 'upload');
-		        if($info){
-		            // 成功上传后 获取上传信息
-		            // 输出 jpg
-		            // echo $info->getExtension(); 
-		            // 输出 42a79759f284b767dfcb2a0197904287.jpg
-		            $data['pic'] =$data['pic'].'^'.$info->getFilename();
+        $data['release_time'] = input('post.publishTime');//时间
+        // var_dump($content);
+        // $content = '阿宾阿达安局办公楼的打';
+        
+        // $res = trie_filter_search($tire, $content);
+        // var_dump($tire);
+        // print_r(substr($content, $res[0], $res[1])); //傻逼
+        // print_r(str_replace($content,substr($content, $res[0], $res[1]), '****'));
+        //在文本中查找所有的脏字
+        
+        // ------------上传图片
+    //     $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
+    //     // echo $fileName;
+    //     $files = request()->file('imgFiles');
+		  //   foreach($files as $file){
+		  // //       // 移动到框架应用根目录/public/uploads/ 目录下
+		  //       $info = $file->rule('uniqid')->move($fileName . DS . 'public' . DS . 'upload');
+		  //       if($info){
+		  //           // 成功上传后 获取上传信息
+		  //           // 输出 jpg
+		  //           // echo $info->getExtension(); 
+		  //           // 输出 42a79759f284b767dfcb2a0197904287.jpg
+		  //           $data['pic'] =$data['pic'].'^'.$info->getFilename();
 		            
-		            // echo $info->getFilename(); 
-		        }else{
-		            // 上传失败获取错误信息
-		            echo $file->getError();
-		        }    
-    }
+		  //           // echo $info->getFilename(); 
+		  //       }else{
+		  //           // 上传失败获取错误信息
+		  //           echo $file->getError();
+		  //       }    
+    // }
 	    $res = Db::name('chatinfo')->insert($data);
 	    if($res){
 	    	self::AjaxReturn('','上传成功',1);
@@ -593,30 +607,47 @@ class Api extends Action
 	    	self::AjaxReturn('','提交失败',0);
 	    }
     }
+    public function get_content_readnum(){//统计文章浏览次数
+        $id = input('post.id');//接收文章id
+        $data = Db::name('chatinfo')->where('id',$id)->update(['read_num' => ['exp','read_num+1']]);
+    }
     public function get_all_contentlist(){
-    	header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
     	$data = Db::name('chatinfo')
     		->alias('c')
             ->join('user u','np_chatinfo.uid=np_user.user_id','left')
-            ->order('np_chatinfo.release_time')
+            ->order('c.release_time desc')
             ->field('u.user_mobile,u.user_header,c.*')
             ->select();
+            foreach ($data as $key => $value) {
+               $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
+            }
          self::AjaxReturn($data,'成功',1);
     }
     public function get_single_contentlist(){
-    	header("Access-Control-Allow-Origin:*");
-        header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+    	// header("Access-Control-Allow-Origin:*");
+     //    header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
+     //    header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
     	$uid = input('post.uid');
     	$data = Db::name('chatinfo')
     		->alias('c')
             ->join('user u','np_chatinfo.uid=np_user.user_id','left')
-            ->order('np_chatinfo.release_time')
+            ->order('c.release_time desc')
             ->field('u.user_mobile,u.user_header,c.*')
             ->where('uid',$uid)
             ->select();
+             foreach ($data as $key => $value) {
+               $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
+            }
          self::AjaxReturn($data,'成功',1);
+    }
+    public function get_dirty($content){//获取脏字
+        $dic = $_SERVER['DOCUMENT_ROOT'].'/dirty_words.dic';
+        $tire = trie_filter_load($dic);
+        //该函数的返回值是一个数组，第一个值为脏字出现的位置，第二个值为脏字的长度，拿到返回值后，可以用substr等函数获取脏字
+        $res = trie_filter_search_all($tire, $content);
+        foreach ($res as $key => $value) {
+            $content = str_replace(substr($content, $res[$key][0], $res[$key][1]), '****',$content);
+        }
+        return $content;//把替换的脏字返回
     }
 }
