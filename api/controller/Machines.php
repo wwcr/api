@@ -174,10 +174,13 @@ class Machines extends Action
         $redis = new \Redis();
         $redis->connect(config('redis.host'), config('redis.hostport'));
 
-        $redis->set('test','hello worddddd');
+        $redis->set('test','hello worddddd'); //string 类型
+        $redis->hmset('user:2', ['id' => 2, 'name' => '姜峰2', 'age' => 29]); //hash 类型
         $name = $redis->get('test');
-
+        $user = $redis->hgetall('user:1');
         echo $name;
+        echo '</br>';
+        var_dump($user);
     }
 
     /**
@@ -190,10 +193,15 @@ class Machines extends Action
         $redis = new Redis;
         $redis->open();
 
+        $user = [
+            'id' => 1,
+            'status' => 1,
+            'name' => '王德贵'
+        ];
         ini_set('session.save_handler', 'redis');
         ini_set('session.save_path', 'tcp://127.0.0.1:6379');
-        session('openid', '123456'); //设置session
-        echo '设置session-->' . session('openid') . '</br>';
+        session('openid3', $user); //设置session
+        var_dump(session('openid3')) ;
 
         echo $redis->read($_COOKIE['PHPSESSID']);
     }
