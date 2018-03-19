@@ -311,6 +311,10 @@ class Nurse extends Action
             ->where('np_findcard.find_id', $findId)
             ->find();
 
+        if (!$data) {
+            self::AjaxReturnError('没有该订单');
+        }
+
         self::AjaxReturn($data, '成功获取订单详情');
 
     }
