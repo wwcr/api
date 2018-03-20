@@ -69,6 +69,7 @@ class Nurse extends Action
                 ->count('find_id');
 
             $list = Db::name('findcard')
+                ->join('nurse', 'np_findcard.find_id=np_nurse.find_id', 'left')
                 ->where($where)
                 ->order($order)
                 ->limit($limit)
@@ -105,6 +106,7 @@ class Nurse extends Action
 
             $list = Db::name('findcard')
                 ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
+                ->join('nurse', 'np_findcard.find_id=np_nurse.find_id', 'left')
                 ->where($cityWhere)
                 ->order($order)
                 ->limit($limit)
@@ -317,6 +319,14 @@ class Nurse extends Action
 
         self::AjaxReturn($data, '成功获取订单详情');
 
+    }
+
+    public function redisSetTest()
+    {
+        $codeValue = 45454545;
+        $this->redis->sAdd('settest', $codeValue);
+
+        var_dump($this->redis->SMEMBERS('settest')) ;
     }
 
 }
