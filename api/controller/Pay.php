@@ -183,7 +183,7 @@ class Pay extends Action
                         <return_msg><![CDATA[OK]]></return_msg>
                     </xml>";
             // echo $reply;      // 向微信后台返回结果。
-            $this->query_order($obj['out_trade_no'],$reply,$switch);
+            $this->query_order($obj['out_trade_no'],$reply);
             exit;
             }
         }
@@ -234,7 +234,7 @@ class Pay extends Action
             }
         }
     }
-    public function query_order($order,$reply,$switch=null){//查询订单
+    public function query_order($order,$reply,$switch=''){//查询订单
     	 $sign1 = ['data' =>$order];
     	 $res = Db::name('test')->insert($sign1);
          $out_trade_no = $order;
