@@ -26,8 +26,8 @@ class sms extends Model
     public function send($config)
     {
         // 阿里云Access Key ID和Access Key Secret 从 https://ak-console.aliyun.com 获取
-        $appSecret = 'tIm9L6PtHpNMc2deHlZeOW0MkLBm6g';
-        $appKey = 'LTAI9j2zeBlfipgh';
+        $appSecret = 'Wy7f4CfI5t4wX9cZLrKXtSzEtIBQ6i';
+        $appKey = 'LTAIK2p5NfWn1JOk';
         // 短信签名 详见：https://dysms.console.aliyun.com/dysms.htm?spm=5176.2020520001.1001.3.psXEEJ#/sign
         $signName = $config['sign'];
         // 短信模板Code https://dysms.console.aliyun.com/dysms.htm?spm=5176.2020520001.1001.3.psXEEJ#/template

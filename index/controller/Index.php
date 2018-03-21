@@ -6,15 +6,23 @@ use app\index\module\order;
 use app\index\module\pay;
 use app\index\module\user;
 use app\index\module\city;
+use app\api\module\sms;
+use think\Cache;
 use think\Db;
 
 class Index extends Action
 {
     protected $city;
-
+    protected $redis;
     public function _initialize()
     {
         $this->city = new city();
+         $options = [
+            // 缓存类型为File
+            'type' => 'redis',
+            'prefix' => ''
+        ];
+        $this->redis = Cache::connect($options);//连接redis
     }
     public function index()
     {
@@ -24,11 +32,53 @@ class Index extends Action
         return 'admin';
     }
     public function test(){
-       echo 11113123;
+        $this->redis->set('3123', 113,5);
+    }
+    public function test1111(){
+          echo $this->redis->get('daddad');
+          echo $this->redis->get('daddad')+1;
+          echo $this->redis->get('daddad')+1;
     }
     public function get_banner(){
        $list = Db::name('banner')->select();
         self::AjaxReturn($list);
+    }
+    public function qcode_join(){//加盟商验证码
+        $mobile = input('mobile');
+        $rands = rand(1000,9999);
+        $sms = new sms();
+        $data = [
+            'template_code' => 'SMS_107025019',
+            'json_string_param' => ["code" =>$rands],
+            'phone' =>'15312668097',
+            // 'phone' =>$mobile,
+            'sign'=>'无维科技'
+        ];
+            if($sms->send($data)){
+                $this->redis->set($mobile, $rands,300);
+                self::AjaxReturn('验证码发送成功',$rands);
+            }else{
+                self::AjaxReturnError('验证码发送失败');
+            }
+    }
+    public function join(){//加盟
+        $data['mobile'] = input('tel');
+        $data['name'] = input('name');
+        $code = input('code');//短信验证码
+        if($this->redis->get($data['mobile']) != $code){
+            self::AjaxReturn('验证码错误',session('qcode'));
+            return;
+        }
+        $mo = Db::name('join')->where(['mobile'=>$data['mobile']])->find();//查询有没有重复提交
+        if(empty($mo)){
+            $res = Db::name('join')->insert($data);
+            if($res){
+                self::AjaxReturn('提交成功',1);
+            }
+        }else{
+            self::AjaxReturn('重复提交',0);
+        }
+        
     }
     //首页文章
     public function indexArticle(){
@@ -248,8 +298,12 @@ class Index extends Action
         $password = input('user_password');
         $mobile = input('user_mobile');
         $qcode = input('qcode');
-        if(session('qccode') != $qcode){
-            //self::AjaxReturn('您输入的短信验证码不正确','',0);
+        // if(session('qccode') != $qcode){
+        //     //self::AjaxReturn('您输入的短信验证码不正确','',0);
+        // }
+        if($this->redis->get($mobile) != $qcode){
+        	self::AjaxReturn('验证码错误','',0);
+            return;
         }
         if(strlen($nickname) <=0 || mb_strlen($nickname) >=10){
             self::AjaxReturn('昵称不能为空或者必须小于10个汉字','',0);
@@ -284,8 +338,9 @@ class Index extends Action
         $qcode = input('qcode');
         $mobile = input('user_mobile');
         $pwd = input('user_password');
-        if($qcode != session('qcode')){
-            self::AjaxReturn('验证码有误','',0);
+        if($this->redis->get($mobile) != $qcode){
+        	self::AjaxReturn('验证码错误','',0);
+            return;
         }
         $info = Db::name('user')->where(['user_mobile'=>$mobile])->find();
         if(empty($info)){

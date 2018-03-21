@@ -16,9 +16,16 @@ class Sms extends Action
     public function forget(){
         $mobile = input('user_mobile');
         $rands = rand(1000,9999);
+        $token = 'd36e379e-05d0-49c5-bc6a-406085c21c4b'
+        $token = MD5($token);
+        $m_token = input('post.token');//接收app传来的token 进行比对
+        if($m_token != $token){
+            self::AjaxReturnError('系统繁忙');
+            return;
+        }
         $sms = new \app\api\module\sms();
         $data = [
-            'template_code' => 'SMS_107025019',
+            'template_code' => 'SMS_127153066',
             'json_string_param' => ["code" =>$rands],
             'phone' =>$mobile,
             'sign'=>'无维科技'
@@ -34,10 +41,12 @@ class Sms extends Action
         }
     }
     //匹配成功短信
+    // public function MatchingSuccess(){
     public function MatchingSuccess($mobile,$info){
         $sms = new \app\api\module\sms();
         $data = [
-            'template_code' => 'SMS_113456357',
+            'template_code' => 'SMS_127163139',
+            // 'json_string_param' => ["plate" =>514543513132],
             'json_string_param' => ["plate" =>$info['card_number']],
             'phone' =>$mobile,
             'sign'=>'无维科技'
@@ -47,8 +56,11 @@ class Sms extends Action
             self::AjaxReturnError('手机号不能为空');
             self::logger('手机号不能为空','匹配成功短信');
         }
-        if($res = $sms->send($data) == true){
-            return true;
+        $res = $sms->send($data);
+        // var_dump($res);
+        if($res){
+            // return true;
+            return 'success';
         }else{
             return $res;
         }

@@ -165,6 +165,28 @@ class Toolure extends Action
             self::AjaxReturn('验证码发送失败,您已经注册过了','',0);
         }
     }
+    public function qcode_join(){
+        $mobile = input('user_mobile');
+        $rands = rand(1000,9999);
+        $sms = new sms();
+        $data = [
+            'template_code' => 'SMS_107025019',
+            'json_string_param' => ["code" =>$rands],
+            'phone' =>'13879144915',
+            'sign'=>'无维科技'
+        ];
+        $mo = Db::name('user')->where(['user_mobile'=>$mobile])->find();
+        if(empty($mo)){
+            if($sms->send($data)){
+                session('qcode',$rands);
+                self::AjaxReturn('验证码发送成功',$rands);
+            }else{
+                self::AjaxReturnError('验证码发送失败');
+            }
+        }else{
+            self::AjaxReturn('验证码发送失败,您已经注册过了','',0);
+        }
+    }
     public function car(){
         $data = [
             ['c'=>'北京市','j'=>'京'],
