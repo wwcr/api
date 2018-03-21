@@ -23,13 +23,15 @@ class Hardware extends Action
 
     public function add()
     {
-        if (self::$repost) {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $machineId = input('machine_id') ? input('machine_id') : -1;
             $insert = array(
                 'car_card' => input('card'), //车牌
                 'car_location' => input('location'), //地址
                 'car_photo' => input('photo'), //照片
-                'machine_id' => input('machine_id') ?: 0, //设备id
+                'machine_id' => $machineId, //设备id
             );
+
             $validate = ['请检查车牌号', '请检查地址', '请检查照片'];
             $num = -1;
             foreach ($insert as $k => $v) {
@@ -58,6 +60,11 @@ class Hardware extends Action
         } else {
             self::AjaxReturn('请求失败', '', 0);
         }
+    }
+
+    public function add2()
+    {
+        var_dump(dirname(__FILE__));
     }
 
     public function insertData($insert)

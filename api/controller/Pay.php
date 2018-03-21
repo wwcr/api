@@ -55,14 +55,24 @@ class Pay extends Action
         $res = $order->get_price($order);
         return $res[0]['order_price'];
     }
+
+    //参数nurse存在时为看护支付形式，不存在时为订单支付形式
     public function wechat_pay(){//微信支付
          // echo 11111;
         $pay = new Wechat();
         $type = 1;
-        $out_trade_no = input('post.order');
+        // $out_trade_no = input('post.order');
+        if (input('post.order')) {
+            $out_trade_no = input('post.order');
+        }
+
+        if (input('post.find_id')) {
+            $out_trade_no = input('post.find_id'); //看护订单
+        }
         $total_fee = input('post.price')*100;
         // $res = $pay->unifiedOrder(3133454536456131313);//统一下单
-        $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
+        $switch = input('post.nurse');
+        $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,$switch=null);//统一下单
         $res['mweb_url'] = $res['mweb_url'];
         echo json_encode($res);
         // $this->assign('data',$res);
@@ -87,7 +97,14 @@ class Pay extends Action
         // $type = input('post.type');
         $type = 2;
         $pay = new Wechat();
-        $out_trade_no = input('post.order');
+        if (input('post.order')) {
+            $out_trade_no = input('post.order');
+        }
+
+        if (input('post.find_id')) {
+            $out_trade_no = input('post.find_id'); //看护订单
+        }
+
         if($type == 1){//H5支付
         $res = $pay->unifiedOrder($out_trade_no,$type);//统一下单
         $res['mweb_url'] = $res['mweb_url'];
@@ -171,36 +188,90 @@ class Pay extends Action
             }
         }
     }
-    public function query_order($order,$reply){//查询订单
-    	$sign1 = ['data' =>$order];
-    	$res = Db::name('test')->insert($sign1);
-     $out_trade_no = $order;
-     $pay = new Wechat();
-     $res = $pay->orderQuery($out_trade_no);
-     if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS'){
-        if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
-            Db::startTrans();
-        try{
-            $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2]);//支付成功
-            // 提交事务
-            Db::commit();    
-            echo $reply; //支付成功同时数据库修改成功 向微信返回结果
-         }catch (\Exception $e) {
-            // 回滚事务
-            Db::rollback();
-            }
-        }else if($res['trade_state'] == 'PAYERROR'){
-               Db::startTrans();
-        try{
-            Db::name('pay')->where('pay_order',$out_trade_no)->update('pay_status',-1);//支付失败
-            // 提交事务
-            Db::commit();    
-         }catch (\Exception $e) {
-            // 回滚事务
-            Db::rollback();
+
+    public function get_payinfo_nurse(){
+        $postStr = file_get_contents('php://input');
+         $obj = (array)simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
+         // $out_trade_no = $msg['out_trade_no'];//订单号
+         $res = json_encode($obj);
+        $data = ['data' =>$res];
+        $pay = new Wechat();
+        $res = Db::name('test')->insert($data);
+        if ($obj) {
+        $data = array(
+        'appid'                =>    $obj['appid'],
+        "fee_type" => $obj['fee_type'],
+        "is_subscribe" => $obj['is_subscribe'],
+        'mch_id'            =>    $obj['mch_id'],
+        'nonce_str'            =>    $obj['nonce_str'],
+        'result_code'        =>    $obj['result_code'],
+        'openid'            =>    $obj['openid'],
+        'trade_type'        =>    $obj['trade_type'],
+        'bank_type'            =>    $obj['bank_type'],
+        'total_fee'            =>    $obj['total_fee'],
+        'cash_fee'            =>    $obj['cash_fee'],
+        'transaction_id'    =>    $obj['transaction_id'],
+        'out_trade_no'        =>    $obj['out_trade_no'],
+        'time_end'            =>    $obj['time_end'],
+        "return_code" => $obj['return_code'],
+        );
+                // 拼装数据进行第三次签名
+        $sign = $pay->MakeSign($data);        // 获取签名
+        // var_dump($sign);
+        $sign1 = ['data' =>$sign];
+        $res = Db::name('test')->insert($sign1);
+    // /** 将签名得到的sign值和微信传过来的sign值进行比对，如果一致，则证明数据是微信返回的。 */
+        if ($sign == $obj['sign']) {
+            $sign1 = ['data' =>$sign];
+        $res = Db::name('test')->insert($sign1);
+            $reply = "<xml>
+                        <return_code><![CDATA[SUCCESS]]></return_code>
+                        <return_msg><![CDATA[OK]]></return_msg>
+                    </xml>";
+            // echo $reply;      // 向微信后台返回结果。
+            $this->query_order($obj['out_trade_no'],$reply,'nurse');
+            exit;
             }
         }
-     }
+    }
+    public function query_order($order,$reply,$switch=''){//查询订单
+    	 $sign1 = ['data' =>$order];
+    	 $res = Db::name('test')->insert($sign1);
+         $out_trade_no = $order;
+         $pay = new Wechat();
+         $res = $pay->orderQuery($out_trade_no);
+         if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS'){
+                if ($switch == 'nurse') {
+
+                    Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);
+
+                } else {
+
+                    if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
+                        Db::startTrans();
+                    try{
+                        $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2]);//支付成功
+                        // 提交事务
+                        Db::commit();
+                        echo $reply; //支付成功同时数据库修改成功 向微信返回结果
+                     }catch (\Exception $e) {
+                        // 回滚事务
+                        Db::rollback();
+                        }
+                    }else if($res['trade_state'] == 'PAYERROR'){
+                           Db::startTrans();
+                    try{
+                        Db::name('pay')->where('pay_order',$out_trade_no)->update('pay_status',-1);//支付失败
+                        // 提交事务
+                        Db::commit();
+                     }catch (\Exception $e) {
+                        // 回滚事务
+                        Db::rollback();
+                        }
+                    }
+
+                }
+         }
     }
      public function query_ordertest(){//查询订单
      $out_trade_no = 2018030710199504;
