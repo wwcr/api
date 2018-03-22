@@ -62,9 +62,60 @@ class Hardware extends Action
         }
     }
 
-    public function add2()
+    public function add_new()
     {
-        var_dump(dirname(__FILE__));
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $machineId = input('machine_id') ? input('machine_id') : -1;
+            $validateCard = input('validate_card');
+            $gps = input('gps');
+
+            // if (trim($validateCard) == '') {
+            //     self::AjaxReturn('车牌号不合法', '', 0);
+            // }
+
+            $insert = array(
+                'car_card' => input('card'), //车牌
+                'car_location' => input('location'), //地址
+                'car_photo' => input('photo'), //照片
+                'validate_card' => $validateCard, //校验车牌
+                'machine_id' => $machineId, //设备id
+                'car_gps' => $gps, //gps号码
+            );
+
+            $validate = ['请检查车牌号', '请检查地址', '请检查照片'];
+            $num = -1;
+            foreach ($insert as $k => $v) {
+                $num++;
+                if (!$insert[$k]) self::AjaxReturn($validate[$num], '', 0);
+            }
+            $insert['car_hash'] = md5(input('card'));
+            $insert['car_addtime'] = getStrtime();
+            $insert['car_mark'] = input('mark', '');
+
+            // if ($validateCard == input('card')) {
+            //     $insert['type'] = 1;
+            // } else {
+            //     $insert['type'] = 2;
+            // }
+            self::logger($insert,'硬件insert',4);
+            $isCardata = Db::name('cardata')
+                ->where(['car_hash' => $insert['car_hash']])
+                ->order('car_id DESC')
+                ->find();
+            //5分钟内不重复
+            if (empty($isCardata)) {
+                $this->insertData($insert);
+            } else {
+                $time = strtotime($isCardata['car_addtime']);
+                if ((time() - $time) <= 300) {
+                    self::AjaxReturn('该车牌已经添加成功');
+                } else {
+                    $this->insertData($insert);
+                }
+            }
+        } else {
+            self::AjaxReturn('请求失败', '', 0);
+        }
     }
 
     public function insertData($insert)
@@ -73,7 +124,7 @@ class Hardware extends Action
         if ($result) {
             //更新匹配
             $math = new Matching($insert);
-            $result = $math->inits($insert['car_hash'], $result);
+            $result = $math->inits($insert['car_card'], $result, $insert);
             //车牌匹配, 立刻返回结果
             self::logger($result,'更新匹配',4);
             self::AjaxReturn('添加成功', $result);
