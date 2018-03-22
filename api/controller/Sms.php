@@ -16,9 +16,16 @@ class Sms extends Action
     public function forget(){
         $mobile = input('user_mobile');
         $rands = rand(1000,9999);
+        $token = 'd36e379e-05d0-49c5-bc6a-406085c21c4b'
+        $token = MD5($token);
+        $m_token = input('post.token');//接收app传来的token 进行比对
+        if($m_token != $token){
+            self::AjaxReturnError('系统繁忙');
+            return;
+        }
         $sms = new \app\api\module\sms();
         $data = [
-            'template_code' => 'SMS_107025019',
+            'template_code' => 'SMS_127153066',
             'json_string_param' => ["code" =>$rands],
             'phone' =>$mobile,
             'sign'=>'无维科技'
@@ -52,8 +59,9 @@ class Sms extends Action
         $res = $sms->send($data);
         // var_dump($res);
         if($res){
+
             return true;
-            // return 'success';
+
         }else{
             return $res;
         }

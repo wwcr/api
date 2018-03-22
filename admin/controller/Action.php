@@ -37,6 +37,11 @@ class  Action extends Controller{
    		$res = Db::name('banner')->where('id',$id)->delete();
    		echo json_encode($res);
    }
+   public function delete_article(){//添加轮播图
+   		$id = input('id');
+   		$res = Db::name('chatinfo')->where('id',$id)->delete();
+   		echo json_encode($res);
+   }
    public function edit_banner(){//添加轮播图
    		$id = input('id');
    		$res = Db::name('banner')->where('id',$id)->select();

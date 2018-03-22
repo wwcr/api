@@ -612,33 +612,49 @@ class Api extends Action
         $data = Db::name('chatinfo')->where('id',$id)->update(['read_num' => ['exp','read_num+1']]);
     }
     public function get_all_contentlist(){
+        $limit = input('limit');
+         $allcount = Db::name('chatinfo')//总条数
+           ->alias('c')
+            ->join('user u','np_chatinfo.uid=np_user.user_id','left')
+            ->order('c.release_time desc')
+            ->field('u.user_mobile,u.user_header,c.*')
+            ->select();
+        $count = count($allcount);//总条数
     	$data = Db::name('chatinfo')
     		->alias('c')
             ->join('user u','np_chatinfo.uid=np_user.user_id','left')
             ->order('c.release_time desc')
             ->field('u.user_mobile,u.user_header,c.*')
+            ->limit($limit)
             ->select();
             foreach ($data as $key => $value) {
                $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
             }
-         self::AjaxReturn($data,'成功',1);
+         self::AjaxReturn($data,$count);
     }
     public function get_single_contentlist(){
-    	// header("Access-Control-Allow-Origin:*");
-     //    header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-     //    header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        $limit = input('limit');
     	$uid = input('post.uid');
+        $allcount = Db::name('chatinfo')//总条数
+           ->alias('c')
+            ->join('user u','np_chatinfo.uid=np_user.user_id','left')
+            ->order('c.release_time desc')
+            ->field('u.user_mobile,u.user_header,c.*')
+            ->where('uid',$uid)
+            ->select();
+        $count = count($allcount);//总条数
     	$data = Db::name('chatinfo')
     		->alias('c')
             ->join('user u','np_chatinfo.uid=np_user.user_id','left')
             ->order('c.release_time desc')
             ->field('u.user_mobile,u.user_header,c.*')
             ->where('uid',$uid)
+            ->limit($limit)
             ->select();
              foreach ($data as $key => $value) {
                $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
             }
-         self::AjaxReturn($data,'成功',1);
+         self::AjaxReturn($data,$count);
     }
     public function get_dirty($content){//获取脏字
         $dic = $_SERVER['DOCUMENT_ROOT'].'/dirty_words.dic';
