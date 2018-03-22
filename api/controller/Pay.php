@@ -70,9 +70,17 @@ class Pay extends Action
             $out_trade_no = input('post.find_id'); //看护订单
         }
         $total_fee = input('post.price')*100;
+        // file_put_contents(dirname(__FILE__).'/wechattest.txt', input('post.switch'));
+        // $res = Db::name('test')->insert(input('post.switch'));
         // $res = $pay->unifiedOrder(3133454536456131313);//统一下单
-        $switch = input('post.nurse');
-        $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,$switch=null);//统一下单
+        $switch = input('post.switch');
+        if ($switch == 'nurse') {
+            $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'nurse');//统一下单
+
+        } else {
+            $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
+
+        }
         $res['mweb_url'] = $res['mweb_url'];
         echo json_encode($res);
         // $this->assign('data',$res);
@@ -93,6 +101,8 @@ class Pay extends Action
         // }
 
     }
+
+
       public function wechat_pay_new(){//微信支
         // $type = input('post.type');
         $type = 2;
@@ -234,16 +244,39 @@ class Pay extends Action
             }
         }
     }
-    public function query_order($order,$reply,$switch=''){//查询订单
-    	 $sign1 = ['data' =>$order];
-    	 $res = Db::name('test')->insert($sign1);
+    public function query_order($order,$reply,$switch){//查询订单
+    	 // $sign1 = ['data' =>$switch];
+    	 // $res = Db::name('test')->insert($sign1);
          $out_trade_no = $order;
          $pay = new Wechat();
          $res = $pay->orderQuery($out_trade_no);
          if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS'){
-                if ($switch == 'nurse') {
+                if ($switch == 'nurse' ) {
 
-                    Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);
+                    // Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);
+
+                    if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
+                        Db::startTrans();
+                    try{
+                        $res = Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);//支付成功
+                        // 提交事务
+                        Db::commit();
+                        echo $reply; //支付成功同时数据库修改成功 向微信返回结果
+                     }catch (\Exception $e) {
+                        // 回滚事务
+                        Db::rollback();
+                        }
+                    }else if($res['trade_state'] == 'PAYERROR'){
+                           Db::startTrans();
+                    try{
+                        Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => -1, 'nurse_time' => time()]);//支付失败
+                        // 提交事务
+                        Db::commit();
+                     }catch (\Exception $e) {
+                        // 回滚事务
+                        Db::rollback();
+                        }
+                    }
 
                 } else {
 
@@ -274,7 +307,7 @@ class Pay extends Action
          }
     }
      public function query_ordertest(){//查询订单
-     $out_trade_no = 2018030710199504;
+     $out_trade_no = 140;
      $pay = new Wechat();
      $res = $pay->orderQuery($out_trade_no);
     var_dump($res);

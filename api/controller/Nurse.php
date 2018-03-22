@@ -69,7 +69,7 @@ class Nurse extends Action
                 ->count('find_id');
 
             $list = Db::name('findcard')
-                ->join('nurse', 'np_findcard.find_id=np_nurse.find_id', 'left')
+                ->join('nurse', 'np_findcard.find_id=np_nurse.fid', 'left')
                 ->where($where)
                 ->order($order)
                 ->limit($limit)
@@ -92,7 +92,8 @@ class Nurse extends Action
 
             foreach (current($proxyCity) as $city) {
                 $cityName = Db::name('city')->where('id', $city)->value('name');
-                $cityWhere .= "instr(car_location, '$cityName') > 0 OR ";
+                $cityWhere .= "instr(car_location, '$cityName') > 0 OR "; //instr效率高于like
+                // $cityWhere .= "(car_location like '%$cityName%' ) OR ";
             }
 
             $cityWhere = rtrim($cityWhere, 'OR ');
@@ -106,10 +107,11 @@ class Nurse extends Action
 
             $list = Db::name('findcard')
                 ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
-                ->join('nurse', 'np_findcard.find_id=np_nurse.find_id', 'left')
+                ->join('nurse', 'np_findcard.find_id=np_nurse.fid', 'left')
                 ->where($cityWhere)
                 ->order($order)
                 ->limit($limit)
+                // ->fetchSql()
                 ->select();
         }
 
@@ -244,7 +246,7 @@ class Nurse extends Action
         }
 
         $data = [
-            'find_id' => $findId,
+            'fid' => $findId,
             'nurse_name' => $name,
             'nurse_phone' => $phone,
             'card_addtime' => time(),
@@ -309,7 +311,7 @@ class Nurse extends Action
         $findId = input('find_id');
 
         $data = Db::name('findcard')
-            ->join('nurse', 'np_findcard.find_id=np_nurse.find_id', 'left')
+            ->join('nurse', 'np_findcard.find_id=np_nurse.fid', 'left')
             ->where('np_findcard.find_id', $findId)
             ->find();
 
@@ -327,6 +329,27 @@ class Nurse extends Action
         $this->redis->sAdd('settest', $codeValue);
 
         var_dump($this->redis->SMEMBERS('settest')) ;
+    }
+
+    //查询该订单是否支付完成
+    public function paystatus()
+    {
+        $findId = input('find_id');
+        $switch = input('switch');
+
+        if ($switch == 'nurse') {
+            $info = Db::name('findcard')->where(['find_id'=>$findId])->find();
+
+            if(!empty($info)){
+                if($info['car_status'] == 4){
+                    self::AjaxReturn('支付成功','',2);
+                }else if ($info['pay_status'] > 4){
+                    self::AjaxReturn('此订单已结完成,不能重复支付','',0);
+                }else{
+                    self::AjaxReturn('该订单未支付','',-1);
+                }
+            }
+        }
     }
 
 }

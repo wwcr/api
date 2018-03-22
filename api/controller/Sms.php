@@ -34,10 +34,12 @@ class Sms extends Action
         }
     }
     //匹配成功短信
+    // public function MatchingSuccess(){
     public function MatchingSuccess($mobile,$info){
         $sms = new \app\api\module\sms();
         $data = [
-            'template_code' => 'SMS_113456357',
+            'template_code' => 'SMS_127163139',
+            // 'json_string_param' => ["plate" =>514543513132],
             'json_string_param' => ["plate" =>$info['card_number']],
             'phone' =>$mobile,
             'sign'=>'无维科技'
@@ -47,8 +49,11 @@ class Sms extends Action
             self::AjaxReturnError('手机号不能为空');
             self::logger('手机号不能为空','匹配成功短信');
         }
-        if($res = $sms->send($data) == true){
+        $res = $sms->send($data);
+        // var_dump($res);
+        if($res){
             return true;
+            // return 'success';
         }else{
             return $res;
         }
