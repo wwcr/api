@@ -68,8 +68,9 @@ class Sms extends Action
         $res = $sms->send($data);
         // var_dump($res);
         if($res){
-            // return true;
-            return 'success';
+
+            return true;
+
         }else{
             return $res;
         }

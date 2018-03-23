@@ -24,15 +24,25 @@ class Matching extends Action
         $this->data = $data;
     }
     //每次添加车辆信息时候更新一次
-    public function inits($hash,$id){
+    public function inits($hash,$id, $data){
+        $data = Db::name('findcard')
+            ->where(['card_number'=>$hash])
+            ->find();
+
+        if ($data['car_status'] == 2) {
+            return '';
+        }
+
         $order = Db::name('findcard')
-            ->where(['car_hash'=>$hash])
+            ->where(['card_number'=>$hash])
             ->order('card_addtime DESC')
             ->update(['car_status'=>2,'card_cardata'=>$id]);
         //车牌匹配ok
         if($order){
+            // $this->updateCardData($id, $data);
+
             $findcard = Db::name('findcard')
-                ->where(['car_hash'=>$hash])
+                ->where(['card_number'=>$hash])
                 ->field('card_uid,card_number')
                 ->find();
             $info = Db::name('user')
@@ -71,4 +81,24 @@ class Matching extends Action
 
         Db::name('mesreceiver')->insert($insertOne);
     }
+
+    private function updateCardData($id, $data = array())
+    {
+        if ($data['validate_card']) {
+            return "验证车牌号不能为空";
+        }
+
+        if ($data['car_gps']) {
+            return "gps不能为空";
+        }
+
+        if ($data['validate_card'] == $data['car_card']) {
+            $data['type'] = 1;
+        } else {
+            $data['type'] = 2;
+        }
+
+        Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type']]);
+    }
+
 }
