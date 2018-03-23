@@ -20,7 +20,6 @@ class login
         }
         return self::$_instance;
     }
-
     public function Adminlogin($user, $pwd)
     {
         $user = Db::name('admin')

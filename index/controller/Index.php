@@ -253,6 +253,59 @@ class Index extends Action
         	if(!$type){
         		$type = 1;
         	}
+            // $check = $this->check_token($this->uid,$this->token);
+            // if($check == 'fail'){//token验证失败
+            //     self::AjaxReturn('系统繁忙,请稍候再试','',-1);
+            // }
+            $insert['card_brand'] = input('card_brand');
+            $insert['card_model'] = input('card_model');
+            $insert['card_number'] = input('card_number').input('card_allnumber');
+            $insert['card_color'] = input('card_color');
+            $insert['card_contract'] = input('card_contract');
+            $insert['card_city'] = input('card_city');
+            $insert['card_addtime'] = getStrtime();
+            $insert['card_uid'] = $this->uid;
+            $insert['car_hash'] = md5(input('card_number'));
+            $insert['card_img1'] = input('allcard_img1');//绿本抵押图片
+            $insert['card_img2'] = input('allcard_img2');//抵押借款合同
+            $insert['car_status'] = 1;
+            $insert['car_ass_id'] = input('car_ass_id');
+           Db::startTrans();//启动事务
+            $res = Db::name('findcard')->insertGetId($insert);
+            if($res) {
+                $order = new order();
+                $order = $order->add(2,450,1,$type);
+                if($order) {
+                    $update = Db::name('findcard')
+                        ->where(['find_id'=>$res])
+                        ->update(['card_order'=>$order]);
+                    if($update){
+                        Db::commit();
+                        self::AjaxReturn('提交成功',$res,$order);
+                    }else{
+                        Db::rollback();
+                        self::AjaxReturn('订单更新失败','',0);
+                    }
+                }else{
+                    Db::rollback();
+                    self::AjaxReturn('订单生成失败','',-1);
+                }
+            }else{
+                Db::rollback();
+                self::AjaxReturn('提交失败','',0);
+            }
+        }
+    }
+    public function findcarnew_safe(){//验证token 
+        if(self::$repost){
+            $type = input('type');//判断是否签约用户
+            if(!$type){
+                $type = 1;
+            }
+            $check = $this->check_token($this->uid,$this->token);
+            if($check == 'fail'){//token验证失败
+                self::AjaxReturn('系统繁忙,请稍候再试','',-1);
+            }
             $insert['card_brand'] = input('card_brand');
             $insert['card_model'] = input('card_model');
             $insert['card_number'] = input('card_number').input('card_allnumber');
@@ -332,6 +385,42 @@ class Index extends Action
         }else{
             self::AjaxReturn('用户不存在','',0);
         }
+    }
+    public function login_safe(){//安全登录验证
+        // $token = '{05B433F7-E29A-940E-2CB4-0C79F22F157E}';//验证token
+        // $token = md5($token);
+        // if($tokens != $_POST['token']){
+        //     self::AjaxReturn('系统繁忙,请稍候再试');
+        //     return;
+        // }
+        $nickname = input('username');
+        $password = input('password');
+        // $info = Db::name('user')->where(['user_mobile'=>$nickname])->find();
+        $info = user::start()->login($nickname,$password);
+        if($info == 'SUCCESS'){//登陆成功
+            $num = rand(100000,999999);
+            $time = time();
+            $uid = session('userinfo')['user_id'];
+            $token = $num.$time.$uid;//拼接token
+            $data = session('userinfo');
+            $data['token'] = sha1($token);
+            $this->redis->set($uid,$data['token'],100000);//把token存储在服务端
+            self::AjaxReturn('登陆成功',$data);//token连同用户信息传到前台
+        }else if($info == 'FAIL'){
+            self::AjaxReturn('用户名或者密码错误','',0);
+        }else if($info == 'FAIL01'){
+            self::AjaxReturn('用户不存在','',0);
+        }
+        // if(!empty($info)){
+        //     if($info['user_password'] == md5(sha1($password))){
+        //         session('userinfo',$info);
+        //         self::AjaxReturn('登陆成功',$info);
+        //     }else{
+        //         self::AjaxReturn('用户名或者密码错误','',0);
+        //     }
+        // }else{
+        //     self::AjaxReturn('用户不存在','',0);
+        // }
     }
     //忘记密码
     public function forget(){
@@ -661,7 +750,5 @@ class Index extends Action
 
         return $list;
     }
-
-
 
 }

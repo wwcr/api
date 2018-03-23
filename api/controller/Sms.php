@@ -8,15 +8,24 @@
 namespace app\api\controller;
 
 use app\index\controller\Action;
-
+use think\Cache;
 class Sms extends Action
-{
+{	
+	public function _initialize()
+    {
+         $options = [
+            // 缓存类型为File
+            'type' => 'redis',
+            'prefix' => ''
+        ];
+        $this->redis = Cache::connect($options);//连接redis
+    }
     public function index($mobile){}
     //忘记密码
     public function forget(){
         $mobile = input('user_mobile');
         $rands = rand(1000,9999);
-        $token = 'd36e379e-05d0-49c5-bc6a-406085c21c4b'
+        $token = 'd36e379e-05d0-49c5-bc6a-406085c21c4b';
         $token = MD5($token);
         $m_token = input('post.token');//接收app传来的token 进行比对
         if($m_token != $token){
@@ -34,7 +43,7 @@ class Sms extends Action
             self::AjaxReturnError('手机号不能为空');
         }
         if($res = $sms->send($data) == true){
-            session('qcode',$rands);
+            $this->redis->set($mobile, $rands,300);
             self::AjaxReturn('验证码发送成功',$rands);
         }else{
             self::AjaxReturnError('验证码发送失败,'.$res);
