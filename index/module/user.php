@@ -97,4 +97,17 @@ class user extends model {
 
         return Db::name('user')->where('relation_id', $uid)->select();
     }
+    public function login($nickname,$password){//前台登录
+        $info = Db::name('user')->where(['user_mobile'=>$nickname])->find();
+        if(!empty($info)){
+            if($info['user_password'] == md5(sha1($password))){
+                session('userinfo',$info);
+                return 'SUCCESS';
+            }else{
+                return 'FAIL';
+            }
+        }else{
+            return 'FAIL01';//用户不存在
+        }
+    }
 }

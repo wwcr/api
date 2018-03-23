@@ -14,10 +14,12 @@ class Action extends Controller
 {
     public static $repost;
     public $uid;
+    public $token;
     public $limit = 1000;
     public function __construct()
     {
         $this->uid = input('uid');
+        $this->token = input('token');
         if($_POST) self::$repost = true;
         parent::__construct();
     }
@@ -59,5 +61,12 @@ class Action extends Controller
         }
         $insert = '['.$name.']['.date('Y-m-d H:i:s',time()).']'.PHP_EOL.'-------------------------------------'.PHP_EOL.$inputData.PHP_EOL.'-------------------------------------'.PHP_EOL;
         file_put_contents($_SERVER['DOCUMENT_ROOT'].'/public/log/info.log',$insert,FILE_APPEND);
+    }
+    public function check_token($uid,$token){//检测token
+        if($this->redis->get($uid) != $token){
+            return 'fail';
+        }else{
+            return 'success';
+        }
     }
 }
