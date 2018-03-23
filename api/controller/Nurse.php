@@ -74,6 +74,10 @@ class Nurse extends Action
                 ->order($order)
                 ->limit($limit)
                 ->select();
+
+            foreach ($list as $key => $value) {
+                $list[$key]['nurse_time'] = date('Y-m-d H:i:s', $value['nurse_time']);
+            }
         }
 
         // 大区经理列表
@@ -113,6 +117,10 @@ class Nurse extends Action
                 ->limit($limit)
                 // ->fetchSql()
                 ->select();
+
+            foreach ($list as $key => $value) {
+                $list[$key]['nurse_time'] = date('Y-m-d H:i:s', $value['nurse_time']);
+            }
         }
 
         $data = [

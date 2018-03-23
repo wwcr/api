@@ -82,13 +82,13 @@ class Matching extends Action
         Db::name('mesreceiver')->insert($insertOne);
     }
 
-    private function updateCardData($id, $data = array())
+    public function updateCardData($id, $data = array())
     {
-        if ($data['validate_card']) {
+        if (!$data['validate_card']) {
             return "验证车牌号不能为空";
         }
 
-        if ($data['car_gps']) {
+        if (!$data['car_gps']) {
             return "gps不能为空";
         }
 
@@ -98,7 +98,7 @@ class Matching extends Action
             $data['type'] = 2;
         }
 
-        Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type']]);
+        return Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type']]);
     }
 
 }

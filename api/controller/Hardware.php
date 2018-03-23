@@ -118,16 +118,36 @@ class Hardware extends Action
         }
     }
 
+    public function confirmAndMatchCard()
+    {
+        $carId = input('car_id');
+        $validateCard = input('validate_card');
+        $gps = input('gps');
+        $insertData = array(
+            'validate_card' => $validateCard, //校验车牌
+            'car_gps' => $gps, //gps号码
+        );
+
+        $math = new Matching();
+        $result = $math->updateCardData($carId, $insertData);
+
+        if ($result) {
+            self::AjaxReturn('确认成功', $result);
+        } else {
+            self::AjaxReturn('操作失败', '', 0);
+        }
+    }
+
     public function insertData($insert)
     {
-        $result = Db::name('cardata')->insertGetId($insert);
-        if ($result) {
+        $carId = Db::name('cardata')->insertGetId($insert);
+        if ($carId) {
             //更新匹配
             $math = new Matching($insert);
-            $result = $math->inits($insert['car_card'], $result, $insert);
+            $result = $math->inits($insert['car_card'], $carId, $insert);
             //车牌匹配, 立刻返回结果
             self::logger($result,'更新匹配',4);
-            self::AjaxReturn('添加成功', $result);
+            self::AjaxReturn('添加成功', $result, $carId);
         } else {
             self::AjaxReturn('添加失败', '', 0);
         }
