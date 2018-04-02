@@ -296,6 +296,58 @@ class Index extends Action
             }
         }
     }
+     public function findcatest(){
+        // if(self::$repost){
+        //     $type = input('type');//判断是否签约用户
+        //     if(!$type){
+        //         $type = 1;
+        //     }
+            // $check = $this->check_token($this->uid,$this->token);
+            // if($check == 'fail'){//token验证失败
+            //     self::AjaxReturn('系统繁忙,请稍候再试','',-1);
+            // }
+            $insert['card_brand'] = 11;
+            $insert['card_model'] = 11;
+            $insert['card_number'] = '京12313';
+            $insert['card_color'] = 1321;
+            $insert['card_contract'] = 123;
+            $insert['card_city'] = 123123;
+            $insert['card_addtime'] = 32113;
+            $insert['card_uid'] = 123123;
+            $insert['car_hash'] = 12312;
+            $insert['card_img1'] = 312321;//绿本抵押图片
+            $insert['card_img2'] = 31231;//抵押借款合同
+            $insert['car_status'] = 1;
+            $insert['car_ass_id'] = 321312;
+           // Db::startTrans();//启动事务
+           for ($i=0; $i <300 ; $i++) { 
+            $res = Db::name('findcard')->insertGetId($insert);
+           }
+            
+            // if($res) {
+            //     $order = new order();
+            //     $order = $order->add(2,450,1,$type);
+            //     if($order) {
+            //         $update = Db::name('findcard')
+            //             ->where(['find_id'=>$res])
+            //             ->update(['card_order'=>$order]);
+            //         if($update){
+            //             Db::commit();
+            //             self::AjaxReturn('提交成功',$res,$order);
+            //         }else{
+            //             Db::rollback();
+            //             self::AjaxReturn('订单更新失败','',0);
+            //         }
+            //     }else{
+            //         Db::rollback();
+            //         self::AjaxReturn('订单生成失败','',-1);
+            //     }
+            // }else{
+            //     Db::rollback();
+            //     self::AjaxReturn('提交失败','',0);
+            // }
+        // }
+    }
     public function findcarnew_safe(){//验证token 
         if(self::$repost){
             $type = input('type');//判断是否签约用户

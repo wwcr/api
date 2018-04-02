@@ -512,14 +512,26 @@ class Api extends Action
             echo "请求失败";
         }
      }
+     public function change_gps($address){
+     	$curl = new Curl();
+        $url = "http://restapi.amap.com/v3/geocode/geo?";
+        $url = $url."key=9ce89cf409e2844be189fd5e37907c9f&output=JSON&address=".$address;
+        $res = $curl->gps_change($url);
+        $result = json_decode($res,true);
+        return $result;
+     }
      public function get_finded_pic(){//已找到车辆的现场图片接口
         // header("Access-Control-Allow-Origin:*");
         // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
         // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
      	$car_no = input('post.id');//接收车牌
-      $res = Db::name('cardata')->where('car_card', $car_no)->find();
-      // echo $res;
-     	// // var_dump($res);
+      	$res = Db::name('cardata')->where('car_card', $car_no)->find();
+      	// echo '<pre>';
+      	$gps = $this->change_gps($res['car_location']);//通过高德的接口把位置名转换为坐标
+      	$gps = explode(',',$gps['geocodes'][0]['location']);
+      	// var_dump($gps);
+      	$res['gpsdata'] = $gps;
+     	// var_dump($gps['geocodes'][0]['location']);
      	echo json_encode($res);
     }
     public function get_userinfo(){//已找到车辆的现场图片接口
@@ -665,5 +677,8 @@ class Api extends Action
             $content = str_replace(substr($content, $res[$key][0], $res[$key][1]), '****',$content);
         }
         return $content;//把替换的脏字返回
+    }
+    public function response(){
+        echo json_encode('success');
     }
 }
