@@ -81,7 +81,19 @@ class Pay extends Action
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
 
         }
+
         $res['mweb_url'] = $res['mweb_url'];
+
+        // $type = input('type');
+        // if ($type == 'findcar') {
+            // $res['mweb_url'] = $res['mweb_url'] . "&redirect_url=http%3A%2F%2Fh5.wwcrpt.com%2F%23%2Fcarnurse%2Fsuccess";
+        // } else {
+            // $res['mweb_url'] = $res['mweb_url'] . "&redirect_url=http%3A%2F%2Fh5.wwcrpt.com%2F%23%2Fcarnurse%2Fsuccess";
+        // }
+
+
+        file_put_contents(dirname(__FILE__).'/wechattest.txt', $res['mweb_url']);
+
         echo json_encode($res);
         // $this->assign('data',$res);
         // return $this->fetch('test');
@@ -118,6 +130,9 @@ class Pay extends Action
         if($type == 1){//H5支付
         $res = $pay->unifiedOrder($out_trade_no,$type);//统一下单
         $res['mweb_url'] = $res['mweb_url'];
+        // $res['mweb_url'] = $res['mweb_url'] . "&redirect_url=http%3A%2F%2Fh5.wwcrpt.com%2F%23%2Fserver%2Fcansuccess";
+        file_put_contents(dirname(__FILE__).'/wechattest.txt', $res['mweb_url']);
+
         echo json_encode($res);
         }else{ //调用APP支付
         $res = $pay->unifiedOrder($out_trade_no,$type);
@@ -306,10 +321,20 @@ class Pay extends Action
                 }
          }
     }
-     public function query_ordertest(){//查询订单
-     $out_trade_no = 140;
-     $pay = new Wechat();
-     $res = $pay->orderQuery($out_trade_no);
-    var_dump($res);
+    public function query_ordertest(){//查询订单
+        $out_trade_no = 140;
+        $pay = new Wechat();
+        $res = $pay->orderQuery($out_trade_no);
+        var_dump($res);
     }
+
+    //支付成功后给大区经理发送
+    public function sendMessageToManager($findId)
+    {
+        //获取订单的城市
+
+        //查找该城市的大区经理
+        //给大区经理发送消息
+    }
+
 }
