@@ -29,7 +29,7 @@ class Matching extends Action
             ->where(['card_number'=>$hash])
             ->find();
 
-        if ($data['car_status'] == 2) {
+        if ($data['car_status'] >= 2) {
             return '';
         }
 
@@ -50,9 +50,10 @@ class Matching extends Action
                 ->field('user_mobile')->find();
 
             $this->sendMessage($findcard['card_uid'], $findcard['card_number']);
-
+            //发短信，更新版本后这里的发短信取消
             $sms = new Sms();
             $sms->MatchingSuccess($info['user_mobile'],$findcard);
+
             return '车牌号：'.$findcard['card_number'].'为查找车辆，请粘贴GPS。';
         }else{
             return '';
@@ -92,13 +93,20 @@ class Matching extends Action
             return "gps不能为空";
         }
 
+        if (!$data['car_img']) {
+            return "上传凭证不能为空";
+        }
+
         if ($data['validate_card'] == $data['car_card']) {
             $data['type'] = 1;
+            $data['card_number'] = $data['car_card'];
+            $sms = new Sms();
+            $sms->MatchingSuccess($data['user_mobile'], $data);
         } else {
             $data['type'] = 2;
         }
 
-        return Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type']]);
+        return Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type'], 'car_img' => $data['car_img']]);
     }
 
 }
