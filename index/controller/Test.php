@@ -10,6 +10,10 @@ use think\Db;
 class Test extends Action
 {
     public function index(){
-        echo 1111;
+    	echo 2312312;
+        $sign1 = ['data' =>1111];
+    	$res = Db::name('test')->select();
+    	// $res = Db::name('test')->insert($sign1);
+    	var_dump($res);
     }
 }

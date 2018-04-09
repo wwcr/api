@@ -10,6 +10,7 @@ namespace app\index\controller;
 use think\Db;
 use tool\curl\Curl;
 use tool\wechat\Wechat;
+use think\Cache;
 /** api 数据交互中心
  * Class Api
  * @package app\index\controller
@@ -22,6 +23,14 @@ class Api extends Action
         header("Access-Control-Allow-Origin:*");
         header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
         header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+          $options = [
+            // 缓存类型为File
+            'type' => 'redis',
+            'prefix' => ''
+        ];
+        $this->redis = Cache::connect($options);//连接redi
+
+        $deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
     }
     public function index()
     {
@@ -40,17 +49,42 @@ class Api extends Action
         return $module->$act();
     }
 
-    public function test()
+    public function examine()
     {    
-      // $curl = new Curl();
-      // $curl->test();
-      // echo  11111;
-        // $pay = new Wechat();
-        // // var_dump($pay);
-        // $pay->test;
-      echo 111;
-    }
+        $data['company_name'] = input('post.company_name');
+        $data['person'] = input('post.person');
+        $data['tel'] = input('post.tel');
+        $code= input('post.code');
+         if($this->redis->get($data['tel']) != $code){
+            echo json_encode('MSGFAIL');
+            return;
+        }
+        $data['city'] = input('post.city');
+        $data['type'] = input('post.type');
+        $mo = Db::name('examine')->where(['tel'=>$data['tel']])->find();//查询有没有重复提交
+        if(empty($mo)){
+           $res = Db::name('examine')->insert($data);
+             if($res){
+                echo json_encode('SUCCESS');
+             }else{
+                echo json_encode('FAIL');
+             }
+        }else{
+            echo json_encode('RESUBMIT');
+        }
 
+         
+    }
+    public function get_examine()
+    {    
+        $data['tel'] = input('post.tel');
+         $res = Db::name('examine')->where('tel',$data['tel'])->select();
+         if($res){
+            echo json_encode($res);
+         }else{
+            echo json_encode('FAIL');
+         }
+    }
     public function car_pinggu()
     {   
         // header("Access-Control-Allow-Origin:*");

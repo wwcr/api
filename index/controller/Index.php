@@ -22,7 +22,11 @@ class Index extends Action
             'type' => 'redis',
             'prefix' => ''
         ];
-        $this->redis = Cache::connect($options);//连接redis
+        $this->redis = Cache::connect($options);//连接redi
+
+        $deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
+        // var_dump($deposit);die;
+
     }
     public function index()
     {
@@ -48,15 +52,14 @@ class Index extends Action
         $rands = rand(1000,9999);
         $sms = new sms();
         $data = [
-            'template_code' => 'SMS_107025019',
+            'template_code' => 'SMS_127153066',
             'json_string_param' => ["code" =>$rands],
-            'phone' =>'15312668097',
-            // 'phone' =>$mobile,
+            'phone' =>$mobile,
             'sign'=>'无维科技'
         ];
             if($sms->send($data)){
                 $this->redis->set($mobile, $rands,300);
-                self::AjaxReturn('验证码发送成功',$rands);
+                self::AjaxReturn('验证码发送成功');
             }else{
                 self::AjaxReturnError('验证码发送失败');
             }
@@ -78,7 +81,7 @@ class Index extends Action
         }else{
             self::AjaxReturn('重复提交',0);
         }
-        
+
     }
     //首页文章
     public function indexArticle(){
@@ -320,10 +323,10 @@ class Index extends Action
             $insert['car_status'] = 1;
             $insert['car_ass_id'] = 321312;
            // Db::startTrans();//启动事务
-           for ($i=0; $i <300 ; $i++) { 
+           for ($i=0; $i <300 ; $i++) {
             $res = Db::name('findcard')->insertGetId($insert);
            }
-            
+
             // if($res) {
             //     $order = new order();
             //     $order = $order->add(2,450,1,$type);
@@ -348,7 +351,7 @@ class Index extends Action
             // }
         // }
     }
-    public function findcarnew_safe(){//验证token 
+    public function findcarnew_safe(){//验证token
         if(self::$repost){
             $type = input('type');//判断是否签约用户
             if(!$type){
