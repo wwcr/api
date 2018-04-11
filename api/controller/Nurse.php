@@ -50,29 +50,14 @@ class Nurse extends Action
         //看护中状态大于24小时后变为交接中状态
         if ($status == 5 || $status == 6) {
 
-            // if ($switch == 'user') {
-            //     $upwhere['card_uid'] = input('uid');
-            // }
-
-            // $upwhere['car_status'] = 5;
-            // $upwhere['nurse_time'] = ['<', time() - 24 * 60 * 60];
-
-            $nwhere['card_addtime'] = ['>', time() - 24 * 60 * 60];
-            $nurses = Db::name('nurse')->where($nwhere)->field('fid')->select();
-            $fid = [];
-
-            foreach ($nurses as $nurse) {
-                $fid[] = $nurse['fid'];
+            if ($switch == 'user') {
+                $upwhere['card_uid'] = input('uid');
             }
 
-            if (count($fid) > 0) {
-                $fids = implode(',', $fid);
-                $upwhere['find_id'] = ['NOT IN', $fids];
-                $upwhere['car_status'] = 5;
+            $upwhere['car_status'] = 5;
+            $upwhere['nurse_time'] = ['<', time() - 24 * 60 * 60];
 
-                Db::name('findcard')->where($upwhere)->update(['car_status' => 6]);
-            }
-
+            Db::name('findcard')->where($upwhere)->update(['car_status' => 6]);
         }
 
         // 普通用户列表
@@ -359,13 +344,12 @@ class Nurse extends Action
     {
         $findId = input('find_id');
         $switch = input('switch');
-
+        $user_id = input('user_id');
         if ($switch == 'nurse') {
             $info = Db::name('findcard')->where(['find_id'=>$findId])->find();
 
             if(!empty($info)){
                 if($info['car_status'] == 4){
-
                     self::AjaxReturn('支付成功','',2);
                 }else if ($info['pay_status'] > 4){
                     self::AjaxReturn('此订单已结完成,不能重复支付','',0);
@@ -373,9 +357,18 @@ class Nurse extends Action
                     self::AjaxReturn('该订单未支付','',-1);
                 }
             }
+        };
+        if ($switch == 'deposit') {
+            $info = Db::name('user')->where(['user_id'=>$user_id])->find();
+
+            if(!empty($info)){
+                if($info['deposit'] == 2){
+                    self::AjaxReturn('支付成功','',2);
+                }else{
+                    self::AjaxReturn('该订单未支付','',-1);
+                }
+            }
         }
     }
-
-
 
 }

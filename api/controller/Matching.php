@@ -60,6 +60,42 @@ class Matching extends Action
         }
     }
 
+    public function inits_new($hash,$id, $data){
+        $data = Db::name('findcard')
+            ->where(['card_number'=>$hash])
+            ->find();
+// var_dump($data);die;
+        if ($data['car_status'] >= 2) {
+            return '';
+        }
+
+        $order = Db::name('findcard')
+            ->where(['card_number'=>$hash, 'recycle' => 1])
+            ->order('card_addtime DESC')
+            ->update(['car_status'=>2,'card_cardata'=>$id]);
+        //车牌匹配ok
+        if($order){
+            // $this->updateCardData($id, $data);
+
+            // $findcard = Db::name('findcard')
+            //     ->where(['card_number'=>$hash])
+            //     ->field('card_uid,card_number')
+            //     ->find();
+            // $info = Db::name('user')
+            //     ->where(['user_id'=>$findcard['card_uid']])
+            //     ->field('user_mobile')->find();
+
+            // $this->sendMessage($findcard['card_uid'], $findcard['card_number']);
+            //发短信，更新版本后这里的发短信取消
+            // $sms = new Sms();
+            // $sms->MatchingSuccess($info['user_mobile'],$findcard);
+
+            return true;
+        }else{
+            return 0;
+        }
+    }
+
     private function sendMessage($uid,$card_number)
     {
         $content = '车辆'.$card_number.'已经找到';
@@ -100,13 +136,28 @@ class Matching extends Action
         if ($data['validate_card'] == $data['car_card']) {
             $data['type'] = 1;
             $data['card_number'] = $data['car_card'];
+
+            $findcard = Db::name('findcard')
+                ->where(['card_number'=>$data['car_card']])
+                ->field('card_uid,card_number')
+                ->find();
+            $this->sendMessage($findcard['card_uid'], $findcard['card_number']);
+
             $sms = new Sms();
             $sms->MatchingSuccess($data['user_mobile'], $data);
+
         } else {
             $data['type'] = 2;
         }
 
-        return Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type'], 'car_img' => $data['car_img']]);
+        $result = Db::name('cardata')->where(['car_id'=>$id])->update(['validate_card'=>$data['validate_card'], 'car_gps'=>$data['car_gps'], 'type' => $data['type'], 'car_img' => $data['car_img']]);
+
+        if ($result) {
+            return '操作成功';
+        } else {
+            return 0;
+        }
+
     }
 
 }

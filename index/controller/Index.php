@@ -14,6 +14,7 @@ class Index extends Action
 {
     protected $city;
     protected $redis;
+    protected $deposit;
     public function _initialize()
     {
         $this->city = new city();
@@ -22,7 +23,10 @@ class Index extends Action
             'type' => 'redis',
             'prefix' => ''
         ];
-        $this->redis = Cache::connect($options);//连接redis
+        $this->redis = Cache::connect($options);//连接redi
+
+        $this->deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
+
     }
     public function index()
     {
@@ -48,10 +52,9 @@ class Index extends Action
         $rands = rand(1000,9999);
         $sms = new sms();
         $data = [
-            'template_code' => 'SMS_107025019',
+            'template_code' => 'SMS_127153066',
             'json_string_param' => ["code" =>$rands],
-            'phone' =>'15312668097',
-            // 'phone' =>$mobile,
+            'phone' =>$mobile,
             'sign'=>'无维科技'
         ];
             if($sms->send($data)){
@@ -78,7 +81,7 @@ class Index extends Action
         }else{
             self::AjaxReturn('重复提交',0);
         }
-        
+
     }
     //首页文章
     public function indexArticle(){
@@ -248,6 +251,19 @@ class Index extends Action
         }
     }
      public function findcarnew(){
+
+        if ($this->deposit !=2) {
+            self::AjaxReturnError('您还没有交押金，请先交押金。', 0);
+        }
+
+        $card_number = input('card_number').input('card_allnumber');
+
+        $isFindCar = Db::name('findcard')->where('card_number', $card_number)->field('find_id')->find();
+
+        if ($isFindCar) {
+            self::AjaxReturnError('该委单已经存在，不能重复添加，请联系客服', 0);
+        }
+
         if(self::$repost){
         	$type = input('type');//判断是否签约用户
         	if(!$type){
@@ -320,10 +336,10 @@ class Index extends Action
             $insert['car_status'] = 1;
             $insert['car_ass_id'] = 321312;
            // Db::startTrans();//启动事务
-           for ($i=0; $i <300 ; $i++) { 
+           for ($i=0; $i <300 ; $i++) {
             $res = Db::name('findcard')->insertGetId($insert);
            }
-            
+
             // if($res) {
             //     $order = new order();
             //     $order = $order->add(2,450,1,$type);
@@ -348,7 +364,7 @@ class Index extends Action
             // }
         // }
     }
-    public function findcarnew_safe(){//验证token 
+    public function findcarnew_safe(){//验证token
         if(self::$repost){
             $type = input('type');//判断是否签约用户
             if(!$type){
@@ -801,6 +817,19 @@ class Index extends Action
             ->select();
 
         return $list;
+    }
+
+    public function isDeposit()
+    {
+        $uid = input('uid');
+
+        $deposit = Db::name('user')->where(['user_id' => $uid])->value('deposit');
+
+        if ($deposit != 2) {
+            return self::AjaxReturnError('您还没有交押金，请先交押金。', $deposit);
+        }
+
+        return self::AjaxReturn( $deposit, '已交押金用户', 1);
     }
 
 }

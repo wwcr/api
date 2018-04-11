@@ -22,11 +22,39 @@ class Toolure extends Action
     public function test(){
         echo 'test';
     }
+
+     public function upload_mc(){
+        // 获取表单上传文件 例如上传了001.jpg
+         $path = $_SERVER['DOCUMENT_ROOT'].'/public/banner';
+         $file = request()->file('image');
+         $type = input('post.type');//1是添加 2是更新
+         $title = input('post.title');
+        // // 移动到框架应用根目录/public/uploads/ 目录下
+        if($file){
+            $info = $file->move($path);
+            if($info){
+                    $banner = $path.'/'.$info->getSaveName();
+                    $data=['banner'=>$banner];
+                    if($type == 2){
+                        $id = input('post.id');
+                        $res = Db::name('banner')->where('id',$id)->update($data);
+                    }else{
+                        $res = Db::name('banner')->insert($data);
+                    }
+                     self::AjaxReturn($path,'上传成功');
+                }
+            }else{
+                // 上传失败获取错误信息
+                echo $file->getError();
+            }
+    }
+
     //普通的图片上传
     public function upload()
     {
         // var_dump($_FILES);
         $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
+        file_put_contents(dirname(__FILE__).'/uploadFile3.txt', json_encode($_FILES),FILE_APPEND);
         if($_FILES){
             self::logger($_FILES,'提交的post流');
             $ext = explode('/',$_FILES['file']['type']);
@@ -68,6 +96,7 @@ class Toolure extends Action
             }
         }
     }
+
       public function upload_contract()//合同
     {
             header("Access-Control-Allow-Origin:*");
@@ -106,7 +135,7 @@ class Toolure extends Action
                 $copy_x = $src_w*0.3;
                 $copy_y = $dst_h - $src_h*1.5;
                 imagecopymerge($dst, $src, $copy_x, $copy_y, 0, 0, $src_w, $src_h, 100);
-                // $new_addr = uniqid('show', true).'.png'; 
+                // $new_addr = uniqid('show', true).'.png';
                 imagepng($dst,$filename);
                 imagedestroy($dst);
                 imagedestroy($src);

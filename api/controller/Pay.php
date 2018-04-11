@@ -63,20 +63,27 @@ class Pay extends Action
         $type = 1;
         // $out_trade_no = input('post.order');
         if (input('post.order')) {
-            $out_trade_no = input('post.order');
+            $out_trade_no = input('post.order'). '_' . uniqid(); //查看寻车订单详细位置时传的参数
         }
 
         if (input('post.find_id')) {
-            $out_trade_no = input('post.find_id'); //看护订单
+            $out_trade_no = input('post.find_id'). '_' . uniqid(); //看护订单,看护支付时传的参数
         }
+
+        if (input('post.user_id')) {
+            $out_trade_no = input('post.user_id') . '_' . uniqid(); //用户交押金时传的参数
+        }
+
         $total_fee = input('post.price')*100;
         // file_put_contents(dirname(__FILE__).'/wechattest.txt', input('post.switch'));
         // $res = Db::name('test')->insert(input('post.switch'));
         // $res = $pay->unifiedOrder(3133454536456131313);//统一下单
         $switch = input('post.switch');
         if ($switch == 'nurse') {
+            $total_fee = 5000*100;
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'nurse');//统一下单
-
+        } else if ($switch == 'deposit') {
+            $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'deposit');//统一下单
         } else {
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
 
@@ -92,7 +99,7 @@ class Pay extends Action
         // }
 
 
-        file_put_contents(dirname(__FILE__).'/wechattest.txt', $res['mweb_url']);
+        // file_put_contents(dirname(__FILE__).'/wechatdeposit.txt', $res['mweb_url'], true);
 
         echo json_encode($res);
         // $this->assign('data',$res);
@@ -115,7 +122,7 @@ class Pay extends Action
     }
 
 
-      public function wechat_pay_new(){//微信支
+    public function wechat_pay_new(){//微信支
         // $type = input('post.type');
         $type = 2;
         $pay = new Wechat();
@@ -259,6 +266,54 @@ class Pay extends Action
             }
         }
     }
+
+    public function get_payinfo_deposit(){
+        $postStr = file_get_contents('php://input');
+         $obj = (array)simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
+         // $out_trade_no = $msg['out_trade_no'];//订单号
+         $res = json_encode($obj);
+        $data = ['data' =>$res];
+        $pay = new Wechat();
+        $res = Db::name('test')->insert($data);
+        if ($obj) {
+        $data = array(
+        'appid'                =>    $obj['appid'],
+        "fee_type" => $obj['fee_type'],
+        "is_subscribe" => $obj['is_subscribe'],
+        'mch_id'            =>    $obj['mch_id'],
+        'nonce_str'            =>    $obj['nonce_str'],
+        'result_code'        =>    $obj['result_code'],
+        'openid'            =>    $obj['openid'],
+        'trade_type'        =>    $obj['trade_type'],
+        'bank_type'            =>    $obj['bank_type'],
+        'total_fee'            =>    $obj['total_fee'],
+        'cash_fee'            =>    $obj['cash_fee'],
+        'transaction_id'    =>    $obj['transaction_id'],
+        'out_trade_no'        =>    $obj['out_trade_no'],
+        'time_end'            =>    $obj['time_end'],
+        "return_code" => $obj['return_code'],
+        );
+                // 拼装数据进行第三次签名
+        $sign = $pay->MakeSign($data);        // 获取签名
+        // var_dump($sign);
+        $sign1 = ['data' =>$sign];
+        // file_put_contents(dirname(__FILE__).'/wechatdeposit2.txt', $obj['out_trade_no'], true);
+
+        $res = Db::name('test')->insert($sign1);
+    // /** 将签名得到的sign值和微信传过来的sign值进行比对，如果一致，则证明数据是微信返回的。 */
+        if ($sign == $obj['sign']) {
+            $sign1 = ['data' =>$sign];
+        $res = Db::name('test')->insert($sign1);
+            $reply = "<xml>
+                        <return_code><![CDATA[SUCCESS]]></return_code>
+                        <return_msg><![CDATA[OK]]></return_msg>
+                    </xml>";
+            // echo $reply;      // 向微信后台返回结果。
+            $this->query_order($obj['out_trade_no'],$reply,'deposit');
+            exit;
+            }
+        }
+    }
     public function query_order($order,$reply,$switch){//查询订单
     	 // $sign1 = ['data' =>$switch];
     	 // $res = Db::name('test')->insert($sign1);
@@ -267,9 +322,7 @@ class Pay extends Action
          $res = $pay->orderQuery($out_trade_no);
          if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS'){
                 if ($switch == 'nurse' ) {
-
-                    // Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);
-
+                    $out_trade_no = strchr($out_trade_no, '_', true);
                     if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
                         Db::startTrans();
                     try{
@@ -293,12 +346,40 @@ class Pay extends Action
                         }
                     }
 
-                } else {
+                } else if($switch == 'deposit'){
 
+                    $out_trade_no = strchr($out_trade_no, '_', true);
+                    file_put_contents(dirname(__FILE__).'/wechatdeposit3.txt', $res['trade_state'], true);
                     if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
                         Db::startTrans();
                     try{
-                        $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2]);//支付成功
+                        $res = Db::name('user')->where('user_id',$out_trade_no)->update(['deposit' => 2, 'deposit_addtime' => time()]);//支付成功
+                        // 提交事务
+                        Db::commit();
+                        echo $reply; //支付成功同时数据库修改成功 向微信返回结果
+                     }catch (\Exception $e) {
+                        // 回滚事务
+                        Db::rollback();
+                        }
+                    }else if($res['trade_state'] == 'PAYERROR'){
+                           Db::startTrans();
+                    try{
+                        $res = Db::name('user')->where('user_id',$out_trade_no)->update(['deposit' => -1, 'deposit_addtime' => time()]);//支付失败
+                        // 提交事务
+                        Db::commit();
+                     }catch (\Exception $e) {
+                        // 回滚事务
+                        Db::rollback();
+                        }
+                    }
+
+                } else {
+                    $out_trade_no = strchr($out_trade_no, '_', true);
+                    if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
+                        Db::startTrans();
+                    try{
+                        $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2, 'pay_time' => time()]);//支付成功
+                        $res = Db::name('findcard')->where('card_order',$out_trade_no)->update(['car_status' => 3]);//订单支付完成状态
                         // 提交事务
                         Db::commit();
                         echo $reply; //支付成功同时数据库修改成功 向微信返回结果

@@ -32,7 +32,8 @@ class Find extends Action
         $status = input('status');
         $order_by = input('post.order_by');
         // echo $order_by;
-        $where = ['car_status'=>$status,'card_uid'=>$this->uid,'pay_status'=>2];
+        // $where = ['car_status'=>$status,'card_uid'=>$this->uid,'pay_status'=>2, 'recycle'=>1];
+        $where = ['car_status'=>$status,'card_uid'=>$this->uid, 'recycle'=>1];
         if($status ==3){
             $where = 'car_status >= 2 and card_uid='.$this->uid;
         }
@@ -48,7 +49,6 @@ class Find extends Action
             ->select();
         $count = count($allcount);
         $list = Db::name('findcard')
-            //->join('exorder','np_exorder.ex_fid=np_findcard.find_id','left')
             ->join('np_pay','np_pay.pay_order=np_findcard.card_order','left')
             ->where($where)
             ->order($order)
@@ -57,9 +57,35 @@ class Find extends Action
             ->limit($limit)
             // ->fetchSql()
             ->select();
-            // var_dump($list);
+
         self::AjaxReturn($list,$count);
     }
+
+    //取消寻车订单
+    public function cancleFindCard()
+    {
+        $findId = input('find_id');
+        $uid = input('uid');
+
+        $data = Db::name('findcard')->where('find_id', $findId)->find();
+
+        if ($data['car_status'] >=2) {
+            self::AjaxReturnError('该车辆已经找到，不能取消委单');
+        }
+
+        if ($data['card_uid'] != $uid) {
+            self::AjaxReturnError('权限不足，无法取消');
+        }
+
+        $result = Db::name('findcard')->where('find_id', $findId)->delete();
+
+        if ($result) {
+            self::AjaxReturn('','取消成功', 1);
+        } else {
+            self::AjaxReturnError('操作失败，请重试');
+        }
+    }
+
     public function listd(){
         $limit = input('limit',10);
         $status = input('status');

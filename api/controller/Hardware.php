@@ -93,19 +93,32 @@ class Hardware extends Action
                 ->where(['car_hash' => $insert['car_hash']])
                 ->order('car_id DESC')
                 ->find();
-            //5分钟内不重复
+            //3个月内不重复添加 3*30*24*60*60
             if (empty($isCardata)) {
-                $this->insertData($insert);
+                $data = $this->insertData_new($insert);
+                if ($data) {
+                    self::AjaxReturn($data, '该车辆是在寻车辆，请完成以下操作。');
+                } else {
+                    self::AjaxReturn('', '添加失败', 0);
+                }
             } else {
                 $time = strtotime($isCardata['car_addtime']);
-                if ((time() - $time) <= 300) {
-                    self::AjaxReturn('该车牌已经添加成功');
+                $findCard = Db::name('findcard')->where('card_number', input('card'))->find();
+
+                // 三个月之内 && （委单不存在 || 委单取消 ||  委单已找到）
+                if ((time() - $time) <= 7776000 && (!$findCard || $findCard['recycle'] ==2 || $findCard['car_status'] >1)) {
+                    self::AjaxReturn('', '该车牌已经添加成功');
                 } else {
-                    $this->insertData($insert);
+                    $data = $this->insertData_new($insert);
+                    if ($data) {
+                        self::AjaxReturn($data, '该车辆是在寻车辆，请完成以下操作。');
+                    } else {
+                        self::AjaxReturn('', '添加失败', 0);
+                    }
                 }
             }
         } else {
-            self::AjaxReturn('请求失败', '', 0);
+            self::AjaxReturn('', '请求失败', 0);
         }
     }
 
@@ -139,9 +152,9 @@ class Hardware extends Action
         $result = $math->updateCardData($carId, $insertData);
 
         if ($result) {
-            self::AjaxReturn($result, '操作成功');
+            self::AjaxReturn('', $result);
         } else {
-            self::AjaxReturn('操作失败', '', 0);
+            self::AjaxReturn('', '操作失败', 0);
         }
     }
 
@@ -173,9 +186,27 @@ class Hardware extends Action
             $result = $math->inits($insert['car_card'], $carId, $insert);
             //车牌匹配, 立刻返回结果
             self::logger($result,'更新匹配',4);
-            self::AjaxReturn($carId, '添加成功', 1);
+            self::AjaxReturn($carId, '该车辆是在寻车辆，请完成以下操作。', 1);
         } else {
             self::AjaxReturn('添加失败', '', 0);
+        }
+    }
+
+    public function insertData_new($insert)
+    {
+        $carId = Db::name('cardata')->insertGetId($insert);
+        if ($carId) {
+            //更新匹配
+            $math = new Matching($insert);
+            $result = $math->inits_new($insert['car_card'], $carId, $insert);
+            //车牌匹配, 立刻返回结果
+            $data['carId'] = $carId;
+            $data['isFound'] = $result ? true : false;
+            // self::AjaxReturn($carId, '添加成功', 1);
+            return $data;
+        } else {
+            // self::AjaxReturn('添加失败', '', 0);
+            return 0;
         }
     }
 

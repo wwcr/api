@@ -104,7 +104,7 @@ class Toolure extends Action
                 $copy_x = $src_w*0.3;
                 $copy_y = $dst_h - $src_h*2;
                 imagecopymerge($dst, $src, $copy_x, $copy_y, 0, 0, $src_w, $src_h, 100);
-                $new_addr = uniqid('show', true).'.png'; 
+                $new_addr = uniqid('show', true).'.png';
                 imagepng($dst,$new_addr);
                 imagedestroy($dst);
                 imagedestroy($src);

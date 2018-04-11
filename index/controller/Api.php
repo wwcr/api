@@ -10,22 +10,29 @@ namespace app\index\controller;
 use think\Db;
 use tool\curl\Curl;
 use tool\wechat\Wechat;
+use think\Cache;
 /** api 数据交互中心
  * Class Api
  * @package app\index\controller
  */
 class Api extends Action
-{   
+{
     private $appkey = '743a9232f73942a9fa5a6645c3f1877e';
     private $wz_appkey = 'f99efbffea18d69350538e27f02a4a09'; //申请的全国违章查询APPKEY
     public function _initialize(){
         header("Access-Control-Allow-Origin:*");
         header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
         header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+         $options = [
+            // 缓存类型为File
+            'type' => 'redis',
+            'prefix' => ''
+        ];
+        $this->redis = Cache::connect($options);//连接redi
+        $deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
     }
     public function index()
     {
-        p(4);die;
         $mod = input('mod','Index');
         $act = input('act','test');
         if($mod === 'Index') {
@@ -41,7 +48,7 @@ class Api extends Action
     }
 
     public function test()
-    {    
+    {
       // $curl = new Curl();
       // $curl->test();
       // echo  11111;
@@ -52,7 +59,7 @@ class Api extends Action
     }
 
     public function car_pinggu()
-    {   
+    {
         // header("Access-Control-Allow-Origin:*");
         // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
         // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
@@ -65,10 +72,10 @@ class Api extends Action
     }
     public function province(){//获取车辆评估省份
         $curl = new Curl();
-//如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *  
+//如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *
         // header("Access-Control-Allow-Origin:*");
         // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS"); 
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $url = "http://v.juhe.cn/usedcar/province";
         $params = array(
       "key" => $this->appkey,//应用APPKEY(应用详细页查询)
@@ -91,10 +98,10 @@ class Api extends Action
     }
      public function provincetest(){//获取车辆评估省份
         $curl = new Curl();
-//如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *  
+//如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *
         // header("Access-Control-Allow-Origin:*");
         // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS"); 
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $url = "http://v.juhe.cn/usedcar/province";
         $params = array(
       "key" => $this->appkey,//应用APPKEY(应用详细页查询)
@@ -125,7 +132,7 @@ class Api extends Action
                     # code...
                     $data1[$key1][] = $value2;
                   }
-                  
+
                 }
                 ksort($data1);
                 // echo '<pre>';
@@ -167,7 +174,7 @@ class Api extends Action
         $curl = new Curl();
         // header("Access-Control-Allow-Origin:*");
         // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");   
+        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $car_type = $type == 1 ? 'passenger' : 'commercial';
         $url = "http://v.juhe.cn/usedcar/brand";
         $params = array(
@@ -255,7 +262,7 @@ class Api extends Action
                 // echo json_encode($result['result']);
                 $series_result = array();
                 foreach ($result['result'] as $key => $value) {
-                    
+
                     foreach ($value as $key1 => $value1) {
                         // var_dump($value1['xilie']);
                         foreach ($value1['xilie'] as $key2 => $value2) {
@@ -443,7 +450,7 @@ class Api extends Action
      	echo json_encode($data);
    	 }
     public function update_wz_city(){//违章城市更新 3小时一次
-     	  
+
         $curl = new Curl();
         $url = "http://v.juhe.cn/wz/citys";
         $params = 'key='.$this->wz_appkey.'&format=2';
@@ -452,7 +459,7 @@ class Api extends Action
         if($result){
             if($result['error_code']=='0'){
                 foreach ($result['result'] as $key => $value) {
-                   
+
                      // echo substr($value['province_code'],0,1);
                 	 $data = [
                             'code' => substr($value['province_code'],0,1),
@@ -520,19 +527,36 @@ class Api extends Action
         $result = json_decode($res,true);
         return $result;
      }
-     public function get_finded_pic(){//已找到车辆的现场图片接口
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
-     	$car_no = input('post.id');//接收车牌
-      	$res = Db::name('cardata')->where('car_card', $car_no)->find();
-      	// echo '<pre>';
-      	$gps = $this->change_gps($res['car_location']);//通过高德的接口把位置名转换为坐标
-      	$gps = explode(',',$gps['geocodes'][0]['location']);
-      	// var_dump($gps);
-      	$res['gpsdata'] = $gps;
-     	// var_dump($gps['geocodes'][0]['location']);
-     	echo json_encode($res);
+
+     //已找到车辆的现场图片接口
+    public function get_finded_pic()
+    {
+     	$car_no = input('id');//接收车牌
+        $findId = input('find_id');//寻车订单id
+
+        $findcarData = Db::name('findcard')//总条数
+            ->join('np_pay','np_pay.pay_order=np_findcard.card_order','left')
+            ->join('cardata','np_cardata.car_id=np_findcard.card_cardata','left')
+            ->where('find_id', $findId)
+            ->find();
+        if ($findcarData['car_status'] >= 2 && $findcarData['car_status'] < 4 && $findcarData['pay_status'] == 2 && strtotime($findcarData['car_addtime']) > time()-24*60*60) {
+            $findcarData['isNurse'] = 'true';
+        } else {
+            $findcarData['isNurse'] = 'false';
+        }
+
+        if ($findcarData['pay_status'] == 2) {
+            $findcarData['cardata'] = Db::name('cardata')->where('car_id', $findcarData['card_cardata'])->find();
+            // $findcarData['cardata'] = Db::name('cardata')->where('car_card', $findcarData['card_number'])->find();
+            $gps = $this->change_gps($findcarData['cardata']['car_location']);//通过高德的接口把位置名转换为坐标
+            $gps = explode(',',$gps['geocodes'][0]['location']);
+            $findcarData['cardata']['gpsdata'] = $gps;
+
+        } else {
+            $findcarData['cardata'] = Db::name('cardata')->where('car_card', $car_no)->field('car_photo,car_img')->find();
+        }
+
+     	echo json_encode($findcarData);
     }
     public function get_userinfo(){//已找到车辆的现场图片接口
       // header("Access-Control-Allow-Origin:*");
@@ -558,11 +582,11 @@ class Api extends Action
             $each_month_li = ($money-($n-1)*$each_money)*$li;
             $all_li += $each_month_li;//总利息
             $all_money += $each_all_money;//还款总额
-                
+
             // echo '第'.$n.'月月供'.$each_all_money.'<br>';
             // echo '第'.$n.'月利息'.$each_month_li.'<br>';
                 $data_month[$n] = $each_month_li;
-        }    
+        }
             $data['first'] = $each_money+$money*$li;;
             $data['all_money'] = $all_money;
             $data['all_li'] = $all_li;
@@ -585,13 +609,13 @@ class Api extends Action
         $data['release_time'] = input('post.publishTime');//时间
         // var_dump($content);
         // $content = '阿宾阿达安局办公楼的打';
-        
+
         // $res = trie_filter_search($tire, $content);
         // var_dump($tire);
         // print_r(substr($content, $res[0], $res[1])); //傻逼
         // print_r(str_replace($content,substr($content, $res[0], $res[1]), '****'));
         //在文本中查找所有的脏字
-        
+
         // ------------上传图片
     //     $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
     //     // echo $fileName;
@@ -602,15 +626,15 @@ class Api extends Action
 		  //       if($info){
 		  //           // 成功上传后 获取上传信息
 		  //           // 输出 jpg
-		  //           // echo $info->getExtension(); 
+		  //           // echo $info->getExtension();
 		  //           // 输出 42a79759f284b767dfcb2a0197904287.jpg
 		  //           $data['pic'] =$data['pic'].'^'.$info->getFilename();
-		            
-		  //           // echo $info->getFilename(); 
+
+		  //           // echo $info->getFilename();
 		  //       }else{
 		  //           // 上传失败获取错误信息
 		  //           echo $file->getError();
-		  //       }    
+		  //       }
     // }
 	    $res = Db::name('chatinfo')->insert($data);
 	    if($res){
@@ -680,5 +704,41 @@ class Api extends Action
     }
     public function response(){
         echo json_encode('success');
+    }
+
+     public function examine()
+    {
+        $data['company_name'] = input('post.company_name');
+        $data['person'] = input('post.person');
+        $data['tel'] = input('post.tel');
+        $code= input('post.code');
+         if($this->redis->get($data['tel']) != $code){
+            echo json_encode('MSGFAIL');
+            return;
+        }
+        $data['city'] = input('post.city');
+        $data['type'] = input('post.type');
+        $mo = Db::name('examine')->where(['tel'=>$data['tel']])->find();//查询有没有重复提交
+        if(empty($mo)){
+           $res = Db::name('examine')->insert($data);
+             if($res){
+                echo json_encode('SUCCESS');
+             }else{
+                echo json_encode('FAIL');
+             }
+        }else{
+            echo json_encode('RESUBMIT');
+        }
+
+    }
+    public function get_examine()
+    {
+        $data['tel'] = input('post.tel');
+         $res = Db::name('examine')->where('tel',$data['tel'])->select();
+         if($res){
+            echo json_encode($res);
+         }else{
+            echo json_encode('FAIL');
+         }
     }
 }

@@ -94,6 +94,7 @@ class Machines extends Action
                 ->order('create_time', 'DESC')
                 ->select();
 
+            // var_dump($datas);die;
             $statisticsData['machine_list'] = $this->formatDataToMachineList($datas); //设备列表
             $statisticsData['machine_num'] = count($statisticsData['machine_list']); //设备数量
             $statisticsData['statistics_machine'] = $this->formateDataTostatistics($datas);
@@ -142,13 +143,21 @@ class Machines extends Action
             }
         }
 
-        $formatData['total_find_num'] = $this->findCarStatistics($formatData['car_card_list']); //报警总数
-        $formatData['week_find_num']  = $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
-        $formatData['month_find_num'] = $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
+        // $formatData['total_find_num'] = $this->findCarStatistics($formatData['car_card_list']); //报警总数
+        // $formatData['week_find_num']  = $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
+        // $formatData['month_find_num'] = $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
 
-        $formatData['total_num'] = count($formatData['list']); //拍摄总数
-        $formatData['week_num']  = count($formatData['week_list']); //近7天拍摄总数
-        $formatData['month_num'] = count($formatData['month_list']); //近30天拍摄总数
+        // $formatData['total_num'] = count($formatData['list']); //拍摄总数
+        // $formatData['week_num']  = count($formatData['week_list']); //近7天拍摄总数
+        // $formatData['month_num'] = count($formatData['month_list']); //近30天拍摄总数
+
+        $formatData['total_num']= $this->findCarStatistics($formatData['car_card_list']); //报警总数
+        $formatData['week_num']= $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
+        $formatData['month_num']= $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
+
+        $formatData['total_find_num'] = count($formatData['list']); //拍摄总数
+        $formatData['week_find_num']  = count($formatData['week_list']); //近7天拍摄总数
+        $formatData['month_find_num'] = count($formatData['month_list']); //近30天拍摄总数
 
         return $formatData;
     }
