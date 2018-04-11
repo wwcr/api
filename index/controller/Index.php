@@ -59,7 +59,7 @@ class Index extends Action
         ];
             if($sms->send($data)){
                 $this->redis->set($mobile, $rands,300);
-                self::AjaxReturn('验证码发送成功',$rands);
+                self::AjaxReturn('验证码发送成功');
             }else{
                 self::AjaxReturnError('验证码发送失败');
             }

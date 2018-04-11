@@ -24,11 +24,13 @@ class Api extends Action
         header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
         header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
          $options = [
+
             // 缓存类型为File
             'type' => 'redis',
             'prefix' => ''
         ];
         $this->redis = Cache::connect($options);//连接redi
+
         $deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
     }
     public function index()
@@ -45,17 +47,6 @@ class Api extends Action
             $module = new Toolure();
         }
         return $module->$act();
-    }
-
-    public function test()
-    {
-      // $curl = new Curl();
-      // $curl->test();
-      // echo  11111;
-        // $pay = new Wechat();
-        // // var_dump($pay);
-        // $pay->test;
-      echo 111;
     }
 
     public function car_pinggu()
@@ -741,4 +732,11 @@ class Api extends Action
             echo json_encode('FAIL');
          }
     }
+
+     public function get_sale()
+     {
+        $type = input('post.type');
+        $data = $res = Db::name('sale')->where('type',$type)->select();
+        self::AjaxReturn($data,'',1);
+     }
 }
