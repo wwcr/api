@@ -108,6 +108,7 @@ class Nurse extends Action
                 ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
                 ->where($cityWhere)
                 ->count('find_id');
+            // echo $count;die;
 
             $list = Db::name('findcard')
                 ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
@@ -268,7 +269,7 @@ class Nurse extends Action
             $content .= "<p>您的车辆 " . $findCardData['card_number'] . '正在看护中。</p>';
             $content .= "<p>看护人员：" . $name . "</p>";
             $content .= "<p>联系方式：" . $phone . "</p>";
-            $content .= "<p>看护时间：" . date('Y年m月y日 H:i:s', $data['card_addtime']) . "</p>";
+            $content .= "<p>看护时间：" . date('Y年m月d日 H:i:s', $data['card_addtime']) . "</p>";
             $content .= "<p>请尽快联系看护人员！</p>";
 
             $this->sendMessage(input('uid'), $findCardData['card_uid'], $content);

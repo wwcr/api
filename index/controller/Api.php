@@ -519,12 +519,13 @@ class Api extends Action
         return $result;
      }
 
-     //已找到车辆的现场图片接口
+    //已找到车辆的现场图片接口
     public function get_finded_pic()
     {
      	$car_no = input('id');//接收车牌
         $findId = input('find_id');//寻车订单id
-
+        $uid = $this->uid;
+        // var_dump($uid);die;
         $findcarData = Db::name('findcard')//总条数
             ->join('np_pay','np_pay.pay_order=np_findcard.card_order','left')
             ->join('cardata','np_cardata.car_id=np_findcard.card_cardata','left')
@@ -536,15 +537,21 @@ class Api extends Action
             $findcarData['isNurse'] = 'false';
         }
 
+        $user = Db::name('user')->where('user_id', $findcarData['card_uid'])->field('role')->find();
+
+        if ($user['role'] == 1) {
+            $findcarData['isNurse'] = 'false';
+        }
+
         if ($findcarData['pay_status'] == 2) {
             $findcarData['cardata'] = Db::name('cardata')->where('car_id', $findcarData['card_cardata'])->find();
-            // $findcarData['cardata'] = Db::name('cardata')->where('car_card', $findcarData['card_number'])->find();
             $gps = $this->change_gps($findcarData['cardata']['car_location']);//通过高德的接口把位置名转换为坐标
             $gps = explode(',',$gps['geocodes'][0]['location']);
             $findcarData['cardata']['gpsdata'] = $gps;
 
         } else {
-            $findcarData['cardata'] = Db::name('cardata')->where('car_card', $car_no)->field('car_photo,car_img')->find();
+
+            $findcarData['cardata'] = Db::name('cardata')->where('car_id', $findcarData['card_cardata'])->field('car_photo,car_img')->find();
         }
 
      	echo json_encode($findcarData);

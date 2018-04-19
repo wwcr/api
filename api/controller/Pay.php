@@ -80,9 +80,10 @@ class Pay extends Action
         // $res = $pay->unifiedOrder(3133454536456131313);//统一下单
         $switch = input('post.switch');
         if ($switch == 'nurse') {
-            $total_fee = 5000*100;
+            // $total_fee = 5000*100;
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'nurse');//统一下单
         } else if ($switch == 'deposit') {
+            // echo "<script> alert('系统升级中...'); </script>";die;
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'deposit');//统一下单
         } else {
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
@@ -102,22 +103,6 @@ class Pay extends Action
         // file_put_contents(dirname(__FILE__).'/wechatdeposit.txt', $res['mweb_url'], true);
 
         echo json_encode($res);
-        // $this->assign('data',$res);
-        // return $this->fetch('test');
-        // $this->redirect($res['mweb_url']);
-        // if($res['return_code'] == 'FAIL'){//统一下单失败
-        //     echo json_encode($res['err_code_des']);
-        // }else if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS' ){
-        //     $info = array();
-        //     $info['appid'] = $res['appid'];
-        //     $info['partnerid'] = $res['mch_id'];
-        //     $info['nonce_str'] = $res['nonce_str'];
-        //     $info['prepayid'] = $res['prepay_id'];
-        //     $info['timestamp'] = time();
-        //     $info['package'] = 'Sign=WXPay';
-        //     $info['sign'] = $pay->MakeSign($info);
-        //     echo json_encode($info);
-        // }
 
     }
 
@@ -127,52 +112,52 @@ class Pay extends Action
         $type = 2;
         $pay = new Wechat();
         if (input('post.order')) {
-            $out_trade_no = input('post.order');
+            $out_trade_no = input('post.order'). '_' . uniqid(); //查看寻车订单详细位置时传的参数
         }
 
         if (input('post.find_id')) {
-            $out_trade_no = input('post.find_id'); //看护订单
+            $out_trade_no = input('post.find_id'). '_' . uniqid(); //看护订单,看护支付时传的参数
+        }
+
+        if (input('post.user_id')) {
+            $out_trade_no = input('post.user_id') . '_' . uniqid(); //用户交押金时传的参数
+        }
+
+        $total_fee = input('post.price')*100;
+        $switch = input('post.switch');
+
+        if ($switch == 'nurse') {
+            $total_fee = 5000*100;
+            $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'nurse');//统一下单
+        } else if ($switch == 'deposit') {
+            $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'deposit');//统一下单
+        } else {
+            $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
+
         }
 
         if($type == 1){//H5支付
-        $res = $pay->unifiedOrder($out_trade_no,$type);//统一下单
-        $res['mweb_url'] = $res['mweb_url'];
-        // $res['mweb_url'] = $res['mweb_url'] . "&redirect_url=http%3A%2F%2Fh5.wwcrpt.com%2F%23%2Fserver%2Fcansuccess";
-        file_put_contents(dirname(__FILE__).'/wechattest.txt', $res['mweb_url']);
+            // $res = $pay->unifiedOrder($out_trade_no,$type);//统一下单
+            $res['mweb_url'] = $res['mweb_url'];
+            // file_put_contents(dirname(__FILE__).'/wechattest.txt', $res['mweb_url']);
 
-        echo json_encode($res);
+            echo json_encode($res);
         }else{ //调用APP支付
-        $res = $pay->unifiedOrder($out_trade_no,$type);
-        if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS'){//调用成功
-             $data = array(
-        'appid'                =>    $res['appid'],
-        'partnerid'            =>    $res['mch_id'],
-        'prepayid'            =>    $res['prepay_id'],
-        'noncestr'        =>    $res['nonce_str'],
-        'timestamp'            =>    time(),
-        'package'        =>    'Sign=WXPay',
-        );
-                // 拼装数据进行第三次签名
-        $data['sign'] = $pay->MakeSign($data);        // 获取签名
-        echo json_encode($data);
+            // $res = $pay->unifiedOrder($out_trade_no,$type);
+            if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS'){//调用成功
+                 $data = array(
+            'appid'                =>    $res['appid'],
+            'partnerid'            =>    $res['mch_id'],
+            'prepayid'            =>    $res['prepay_id'],
+            'noncestr'        =>    $res['nonce_str'],
+            'timestamp'            =>    time(),
+            'package'        =>    'Sign=WXPay',
+            );
+                    // 拼装数据进行第三次签名
+            $data['sign'] = $pay->MakeSign($data);        // 获取签名
+            echo json_encode($data);
+            }
         }
-        }
-        // $this->assign('data',$res);
-        // return $this->fetch('test');
-        // $this->redirect($res['mweb_url']);
-        // if($res['return_code'] == 'FAIL'){//统一下单失败
-        //     echo json_encode($res['err_code_des']);
-        // }else if($res['return_code'] == 'SUCCESS' && $res['result_code'] == 'SUCCESS' ){
-        //     $info = array();
-        //     $info['appid'] = $res['appid'];
-        //     $info['partnerid'] = $res['mch_id'];
-        //     $info['nonce_str'] = $res['nonce_str'];
-        //     $info['prepayid'] = $res['prepay_id'];
-        //     $info['timestamp'] = time();
-        //     $info['package'] = 'Sign=WXPay';
-        //     $info['sign'] = $pay->MakeSign($info);
-        //     echo json_encode($info);
-        // }
 
     }
     public function get_payinfo(){
@@ -415,6 +400,7 @@ class Pay extends Action
         //获取订单的城市
 
         //查找该城市的大区经理
+
         //给大区经理发送消息
     }
 

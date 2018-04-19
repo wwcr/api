@@ -252,6 +252,10 @@ class Index extends Action
     }
      public function findcarnew(){
 
+        if (config('system_up.findcard') == true) {
+            self::AjaxReturnError('系统升级中....', 0);
+        }
+
         if ($this->deposit !=2) {
             self::AjaxReturnError('您还没有交押金，请先交押金。', 0);
         }
@@ -643,7 +647,49 @@ class Index extends Action
             self::AjaxReturn($list);
         }
     }
-    //用户相关
+    //用户相关 企业认证审核机制 2018-4-11
+    public function user_new(){
+        $uid = input('uid');
+        $sw = input('sw');
+        if($sw == 'info') {
+            $info = Db::name('user')
+                ->where(['user_id'=>$uid])
+                ->field('user_nickname,user_anthen,user_header,user_mobile')
+                ->find();
+            $auth = [];
+            if($info['user_anthen'] == 3){
+                $auth = Db::name('terprise')
+                    ->where(['enuser_uid'=>$uid])
+                    ->find();
+                $auth['showButton'] = false;
+            }
+
+            if ($info['user_anthen'] == 1 || $info['user_anthen'] == 2){
+                $auth = Db::name('personal')
+                    ->where(['per_uid'=>$uid])
+                    ->find();
+
+                if ($info['user_anthen'] == 1) {
+                    $auth['showButton'] = '升级企业认证';
+                }
+
+                if ($info['user_anthen'] == 2) {
+                    $auth['showButton'] = '企业认证审核中';
+                }
+            }
+
+            if ($info['user_anthen'] < 0) {
+                $auth = Db::name('personal')
+                    ->where(['per_uid'=>$uid])
+                    ->find();
+                $auth['showButton'] = '企业认证审核未通过';
+            }
+
+            $info['auth'] = $auth;
+            self::AjaxReturn($info);
+        }
+    }
+
     public function user(){
         $uid = input('uid');
         $sw = input('sw');
@@ -825,11 +871,17 @@ class Index extends Action
 
         $deposit = Db::name('user')->where(['user_id' => $uid])->value('deposit');
 
+        if (config('system_up.findcard') == true) {
+            $deposit['deposit'] = 2;
+            return self::AjaxReturn($deposit, '系统升级中', 1);
+        }
+
         if ($deposit != 2) {
             return self::AjaxReturnError('您还没有交押金，请先交押金。', $deposit);
         }
 
-        return self::AjaxReturn( $deposit, '已交押金用户', 1);
+            return self::AjaxReturn($deposit, '已交押金用户', 1);
+
     }
 
 }

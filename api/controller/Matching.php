@@ -72,7 +72,12 @@ class Matching extends Action
         $order = Db::name('findcard')
             ->where(['card_number'=>$hash, 'recycle' => 1])
             ->order('card_addtime DESC')
-            ->update(['car_status'=>2,'card_cardata'=>$id]);
+            ->update(['card_cardata'=>$id]);
+
+        // $order = Db::name('findcard')
+        //     ->where(['card_number'=>$hash, 'recycle' => 1])
+        //     ->order('card_addtime DESC')
+        //     ->find();
         //车牌匹配ok
         if($order){
             // $this->updateCardData($id, $data);
@@ -137,10 +142,16 @@ class Matching extends Action
             $data['type'] = 1;
             $data['card_number'] = $data['car_card'];
 
+            $order = Db::name('findcard')
+                ->where(['card_number'=>$data['car_card'], 'recycle' => 1])
+                ->order('card_addtime DESC')
+                ->update(['car_status'=>2]);
+
             $findcard = Db::name('findcard')
                 ->where(['card_number'=>$data['car_card']])
                 ->field('card_uid,card_number')
                 ->find();
+
             $this->sendMessage($findcard['card_uid'], $findcard['card_number']);
 
             $sms = new Sms();

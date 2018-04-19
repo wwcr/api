@@ -107,6 +107,7 @@ class Hardware extends Action
 
                 // 三个月之内 && （委单不存在 || 委单取消 ||  委单已找到）
                 if ((time() - $time) <= 7776000 && (!$findCard || $findCard['recycle'] ==2 || $findCard['car_status'] >1)) {
+                    $data = $this->insertData_new($insert);
                     self::AjaxReturn('', '该车牌已经添加成功');
                 } else {
                     $data = $this->insertData_new($insert);

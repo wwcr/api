@@ -270,5 +270,10 @@ $sysconfig = [
         'hostport' => 6379,
         'prefix' => 'wwcr_',
     ],
+
+    //系统升级配置
+    'system_up' => [
+        'findcard' => true,
+    ],
 ];
 return array_merge($sysconfig, $userconfig);
