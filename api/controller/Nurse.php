@@ -80,8 +80,8 @@ class Nurse extends Action
             }
         }
 
-        // 大区经理列表
-        if ($switch == 'manager') {
+        // 大区经理列表(通过地区筛选)
+        if ($switch == 'manager' && config('managerCityProxy')) {
             $uid = input('uid');
 
             $proxyCity = Db::name('user')->where('user_id', $uid)->value('proxy_city');
@@ -114,6 +114,43 @@ class Nurse extends Action
                 ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
                 ->join('nurse', 'np_findcard.find_id=np_nurse.fid', 'left')
                 ->where($cityWhere)
+                ->order($order)
+                ->limit($limit)
+                // ->fetchSql()
+                ->select();
+
+            foreach ($list as $key => $value) {
+                $list[$key]['nurse_time'] = date('Y-m-d H:i:s', $value['nurse_time']);
+            }
+        }
+
+        // 大区经理列表(通过识别机筛选)
+        if (!config('managerCityProxy')) {
+            $uid = input('uid');
+
+            //获取该大区经理的识别机
+            $machines = Db::name('machine')
+                ->where('uid', $uid)
+                ->column('id');
+
+            if (!$machines) {
+                self::AjaxReturnError('您还没有识别机！');
+            }
+
+            $machine = @implode(',', $machines);
+
+            //查找这些识别机下需要看护的车辆
+            $where['machine_id'] = ['in', $machine];
+
+            $count = Db::name('findcard')
+                ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
+                ->where($where)
+                ->count('find_id');
+
+            $list = Db::name('findcard')
+                ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
+                ->join('nurse', 'np_findcard.find_id=np_nurse.fid', 'left')
+                ->where($where)
                 ->order($order)
                 ->limit($limit)
                 // ->fetchSql()

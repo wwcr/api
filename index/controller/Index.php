@@ -250,25 +250,25 @@ class Index extends Action
             }
         }
     }
-     public function findcarnew(){
-
+     public function findcarnew($excelData=null){
         if (config('system_up.findcard') == true) {
             self::AjaxReturnError('系统升级中....', 0);
         }
 
-        if ($this->deposit !=2) {
+        if ($this->deposit !=2 && $excelData == null && config('depositButton')) {
             self::AjaxReturnError('您还没有交押金，请先交押金。', 0);
         }
 
-        $card_number = input('card_number').input('card_allnumber');
+        if ($excelData == null) {
+            $card_number = input('card_number').input('card_allnumber');
+            $isFindCar = Db::name('findcard')->where('card_number', $card_number)->field('find_id')->find();
+        }
 
-        $isFindCar = Db::name('findcard')->where('card_number', $card_number)->field('find_id')->find();
-
-        if ($isFindCar) {
+        if ($isFindCar && !input('find_id')) {
             self::AjaxReturnError('该委单已经存在，不能重复添加，请联系客服', 0);
         }
 
-        if(self::$repost){
+        if(self::$repost || $excelData != null){
         	$type = input('type');//判断是否签约用户
         	if(!$type){
         		$type = 1;
@@ -288,9 +288,30 @@ class Index extends Action
             $insert['car_hash'] = md5(input('card_number'));
             $insert['card_img1'] = input('allcard_img1');//绿本抵押图片
             $insert['card_img2'] = input('allcard_img2');//抵押借款合同
-            $insert['car_status'] = 1;
             $insert['car_ass_id'] = input('car_ass_id');
-           Db::startTrans();//启动事务
+
+            if (config('findcarAudit')) {
+                $insert['car_status'] = -1;
+            } else {
+                $insert['car_status'] = 1;
+            }
+
+            //更新数据
+            if (input('find_id')) {
+                $res = Db::name('findcard')->where(['find_id'=>input('find_id')])->update($insert);
+                if ($res) {
+                    self::AjaxReturn($res,'提交成功',1);
+                }else {
+                    self::AjaxReturn('','提交失败',0);
+                }
+            }
+
+            if ($excelData != null) {//phpexcel条件过滤
+                $insert = $excelData;
+            }
+            if ($excelData == null) {//phpexcel条件过滤
+                Db::startTrans();//启动事务
+            }
             $res = Db::name('findcard')->insertGetId($insert);
             if($res) {
                 $order = new order();
@@ -299,75 +320,48 @@ class Index extends Action
                     $update = Db::name('findcard')
                         ->where(['find_id'=>$res])
                         ->update(['card_order'=>$order]);
-                    if($update){
-                        Db::commit();
-                        self::AjaxReturn('提交成功',$res,$order);
-                    }else{
-                        Db::rollback();
-                        self::AjaxReturn('订单更新失败','',0);
+                    if ($excelData == null) {//phpexcel条件过滤
+                        if($update){
+                            Db::commit();
+                            self::AjaxReturn($res,'提交成功',$order);
+                        }else{
+                            Db::rollback();
+                            self::AjaxReturn('','订单更新失败',0);
+                        }
                     }
                 }else{
-                    Db::rollback();
-                    self::AjaxReturn('订单生成失败','',-1);
+                    if ($excelData == null) {//phpexcel条件过滤
+                        Db::rollback();
+                    }
+                    self::AjaxReturn('','订单生成失败',-1);
                 }
             }else{
-                Db::rollback();
-                self::AjaxReturn('提交失败','',0);
+                if ($excelData == null) {//phpexcel条件过滤
+                    Db::rollback();
+                }
+                self::AjaxReturn('','提交失败',0);
             }
         }
     }
-     public function findcatest(){
-        // if(self::$repost){
-        //     $type = input('type');//判断是否签约用户
-        //     if(!$type){
-        //         $type = 1;
-        //     }
-            // $check = $this->check_token($this->uid,$this->token);
-            // if($check == 'fail'){//token验证失败
-            //     self::AjaxReturn('系统繁忙,请稍候再试','',-1);
-            // }
-            $insert['card_brand'] = 11;
-            $insert['card_model'] = 11;
-            $insert['card_number'] = '京12313';
-            $insert['card_color'] = 1321;
-            $insert['card_contract'] = 123;
-            $insert['card_city'] = 123123;
-            $insert['card_addtime'] = 32113;
-            $insert['card_uid'] = 123123;
-            $insert['car_hash'] = 12312;
-            $insert['card_img1'] = 312321;//绿本抵押图片
-            $insert['card_img2'] = 31231;//抵押借款合同
-            $insert['car_status'] = 1;
-            $insert['car_ass_id'] = 321312;
-           // Db::startTrans();//启动事务
-           for ($i=0; $i <300 ; $i++) {
-            $res = Db::name('findcard')->insertGetId($insert);
-           }
 
-            // if($res) {
-            //     $order = new order();
-            //     $order = $order->add(2,450,1,$type);
-            //     if($order) {
-            //         $update = Db::name('findcard')
-            //             ->where(['find_id'=>$res])
-            //             ->update(['card_order'=>$order]);
-            //         if($update){
-            //             Db::commit();
-            //             self::AjaxReturn('提交成功',$res,$order);
-            //         }else{
-            //             Db::rollback();
-            //             self::AjaxReturn('订单更新失败','',0);
-            //         }
-            //     }else{
-            //         Db::rollback();
-            //         self::AjaxReturn('订单生成失败','',-1);
-            //     }
-            // }else{
-            //     Db::rollback();
-            //     self::AjaxReturn('提交失败','',0);
-            // }
-        // }
+    public function findcarSave()
+    {
+        $findId = input('find_id');
+
+        if (!$findId) {
+            self::AjaxReturn('','订单错误',0);
+        }
+
+        $findData = Db::name('findcard')->where('find_id', $findId)->find();
+
+        if ($findData) {
+            self::AjaxReturn($findData,'获取数据成功',1);
+        } else {
+            self::AjaxReturn('','数据错误',0);
+        }
+
     }
+
     public function findcarnew_safe(){//验证token
         if(self::$repost){
             $type = input('type');//判断是否签约用户
@@ -529,17 +523,17 @@ class Index extends Action
     }
     //提交认证
     public function Authentication(){
-        $is = Db::name('terprise')->where(['enuser_uid'=>$this->uid])->field('en_id')->find();
+        $userAnth = Db::name('user')->where(['user_id'=>$this->uid])->value('user_anthen');
+
         $type = input('type');
         if(!$type) {
-            self::AjaxReturn('出现错误,请重试','',0);
+            self::AjaxReturn('','出现错误,请重试',0);
         }
-        if(!empty($is)) {
-            self::AjaxReturn('系统检测到您已经认证过了,不能重复认证','',0);
-        }
+
         //企业用户
-        Db::startTrans();//启动事务
         if($type == 'enterprise'){
+            $is = Db::name('terprise')->where(['enuser_uid'=>$this->uid])->field('en_id')->find();
+
             $insert = array(
                 'en_name'=>input('en_name'),
                 'en_regmoney'=>input('en_regmoney'),
@@ -557,19 +551,25 @@ class Index extends Action
                 'duty_idcard_up'=>input('duty_idcard_up'),
                 'duty_idcard_down'=>input('duty_idcard_down'),
                 'license_card'=>input('license_card'),
-                'enuser_uid'=>$this->uid
+                'enuser_uid'=>$this->uid,
+                'en_time'=> getStrtime(),
             );
-            $re = Db::name('terprise')->insert($insert);
+            if ($userAnth == -2 || $is) {
+                $re = Db::name('terprise')->where(['enuser_uid' => $this->uid])->update($insert);
+            } else {
+                $re = Db::name('terprise')->insert($insert);
+            }
             if($re){
                 //修改用户认证状态
-                user::start()->editAuth($this->uid,2);
-                Db::commit();
-                self::AjaxReturn('认证成功','',1);
+                $userAuthen = config('certificationAudit') ? 4 : 2;
+                user::start()->editAuth($this->uid,$userAuthen);
+                self::AjaxReturn('成功','',1);
             }else{
-                Db::rollback();
                 self::AjaxReturn('保存失败','',0);
             }
         }else{
+            $is = Db::name('personal')->where(['per_uid'=>$this->uid])->field('per_id')->find();
+
             $insert = array(
                 'per_name'=>input('per_name'),
                 'per_iphone'=>input('per_iphone'),
@@ -582,18 +582,23 @@ class Index extends Action
                 'per_idcard_up'=>input('per_idcard_up'),
                 'per_idcard_down'=>input('per_idcard_down'),
                 'personal_with_card'=>input('personal_with_card'),
-                'per_uid'=>$this->uid
+                'per_uid'=>$this->uid,
+                'per_addtime'=> getStrtime(),
             );
-            $re = Db::name('personal')->insert($insert);
+
+            if ($userAnth == -1 || $is) {
+                $re = Db::name('personal')->where(['per_uid' => $this->uid])->update($insert);
+            } else {
+                $re = Db::name('personal')->insert($insert);
+            }
             if($re){
+                $userAuthen = config('certificationAudit') ? 3 : 1;
                 //修改用户认证状态
-                $rz = user::start()->editAuth($this->uid,1);
+                $rz = user::start()->editAuth($this->uid,$userAuthen);
                 if($rz){
-                    Db::commit();
-                    self::AjaxReturn('认证成功','',1);
+                    self::AjaxReturn('保存成功','',1);
                 }else{
-                    Db::rollback();
-                    self::AjaxReturn('认证失败','',0);
+                    self::AjaxReturn('保存失败','',0);
                 }
             }else{
                 self::AjaxReturn('保存失败','',0);
@@ -648,41 +653,92 @@ class Index extends Action
         }
     }
     //用户相关 企业认证审核机制 2018-4-11
+    //enterAuth表示入口权限，locationHred跳转权限
     public function user_new(){
         $uid = input('uid');
         $sw = input('sw');
         if($sw == 'info') {
             $info = Db::name('user')
                 ->where(['user_id'=>$uid])
-                ->field('user_nickname,user_anthen,user_header,user_mobile')
+                ->field('user_nickname,user_anthen,user_header,user_mobile,company_fail_reason,personal_fail_reason')
                 ->find();
-            $auth = [];
-            if($info['user_anthen'] == 3){
-                $auth = Db::name('terprise')
-                    ->where(['enuser_uid'=>$uid])
-                    ->find();
-                $auth['showButton'] = false;
+
+            if ($info['user_anthen'] == 0 || $info['user_anthen'] == -1 || $info['user_anthen'] == 3) {
+                $info['enterAuth'] = false;
+            } else {
+                $info['enterAuth'] = true;
             }
 
-            if ($info['user_anthen'] == 1 || $info['user_anthen'] == 2){
+            $auth = [];
+            if($info['user_anthen'] == 0){
+                $auth['showButton'] = '未认证';
+                $auth['showButtonCenter'] = '未认证';
+                $auth['locationHref'] = true;
+            }
+
+            if ($info['user_anthen'] == 1 || $info['user_anthen'] == 3 ){
                 $auth = Db::name('personal')
                     ->where(['per_uid'=>$uid])
                     ->find();
 
                 if ($info['user_anthen'] == 1) {
                     $auth['showButton'] = '升级企业认证';
+                    $auth['showButtonCenter'] = '个人已认证';
+                    $auth['locationHref'] = true;
                 }
 
+                if ($info['user_anthen'] == 3) {
+                    $auth['showButton'] = '个人认证审核中';
+                    $auth['showButtonCenter'] = '个人认证审核中';
+                    $auth['locationHref'] = false;
+                }
+
+            }
+
+            if ($info['user_anthen'] == 2 || $info['user_anthen'] == 4){
+                $auth = Db::name('terprise')
+                    ->where(['enuser_uid'=>$uid])
+                    ->find();
+
                 if ($info['user_anthen'] == 2) {
+                    $auth['showButton'] = false;
+                    $auth['showButtonCenter'] = '企业已认证';
+                    $auth['locationHref'] = false;
+                }
+
+                if ($info['user_anthen'] == 4) {
                     $auth['showButton'] = '企业认证审核中';
+                    $auth['showButtonCenter'] = '企业认证审核中';
+                    $auth['locationHref'] = false;
+                    $personalAuth = Db::name('personal')
+                    ->where(['per_uid'=>$uid])
+                    ->find();
+                    $info['enterAuth'] = $personalAuth ? true : false ;
                 }
             }
 
-            if ($info['user_anthen'] < 0) {
+            if ($info['user_anthen'] == -1) {
                 $auth = Db::name('personal')
                     ->where(['per_uid'=>$uid])
                     ->find();
-                $auth['showButton'] = '企业认证审核未通过';
+                $auth['showButton'] = '重新审核';
+                $auth['showButtonCenter'] = '个人认证审核未通过';
+                $auth['locationHref'] = true;
+                $auth['reason'] = json_decode($info['personal_fail_reason']);
+            }
+
+            if ($info['user_anthen'] == -2) {
+                $auth = Db::name('terprise')
+                    ->where(['enuser_uid'=>$uid])
+                    ->find();
+                $personalAuth = Db::name('personal')
+                    ->where(['per_uid'=>$uid])
+                    ->find();
+                $info['enterAuth'] = $personalAuth ? true : false ;
+                $auth['showButton'] = '重新审核';
+                $auth['showButtonCenter'] = '企业认证审核未通过';
+                $auth['locationHref'] = true;
+                $auth['reason'] = json_decode($info['company_fail_reason']);
             }
 
             $info['auth'] = $auth;
@@ -867,6 +923,10 @@ class Index extends Action
 
     public function isDeposit()
     {
+        if (!config('depositButton')) {
+            return self::AjaxReturn(2, '已经开启免押金设置', 1);
+        }
+
         $uid = input('uid');
 
         $deposit = Db::name('user')->where(['user_id' => $uid])->value('deposit');
@@ -880,7 +940,7 @@ class Index extends Action
             return self::AjaxReturnError('您还没有交押金，请先交押金。', $deposit);
         }
 
-            return self::AjaxReturn($deposit, '已交押金用户', 1);
+        return self::AjaxReturn($deposit, '已交押金用户', 1);
 
     }
 

@@ -312,6 +312,14 @@ class Pay extends Action
                         Db::startTrans();
                     try{
                         $res = Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);//支付成功
+                        if ($res) {
+                            //消息通知
+                            if (config('managerCityProxy')) {
+                                $this->sendMessageToManager($out_trade_no);
+                            } else {
+                                $this->sendMsgToManager($out_trade_no);
+                            }
+                        }
                         // 提交事务
                         Db::commit();
                         echo $reply; //支付成功同时数据库修改成功 向微信返回结果
@@ -362,15 +370,20 @@ class Pay extends Action
                     $out_trade_no = strchr($out_trade_no, '_', true);
                     if($res['trade_state'] == 'SUCCESS'){//该订单交易成功
                         Db::startTrans();
-                    try{
-                        $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2, 'pay_time' => time()]);//支付成功
-                        $res = Db::name('findcard')->where('card_order',$out_trade_no)->update(['car_status' => 3]);//订单支付完成状态
-                        // 提交事务
-                        Db::commit();
-                        echo $reply; //支付成功同时数据库修改成功 向微信返回结果
-                     }catch (\Exception $e) {
-                        // 回滚事务
-                        Db::rollback();
+                        try{
+                            $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2, 'pay_time' => time()]);//支付成功
+                            $res2 = Db::name('findcard')->where('card_order',$out_trade_no)->update(['car_status' => 3]);//订单支付完成状态
+                            if ($res2) {
+                                //恢复订单
+                                $this->recoverFindcard($out_trade_no);
+
+                            }
+                            // 提交事务
+                            Db::commit();
+                            echo $reply; //支付成功同时数据库修改成功 向微信返回结果
+                        }catch (\Exception $e) {
+                            // 回滚事务
+                            Db::rollback();
                         }
                     }else if($res['trade_state'] == 'PAYERROR'){
                            Db::startTrans();
@@ -394,14 +407,97 @@ class Pay extends Action
         var_dump($res);
     }
 
-    //支付成功后给大区经理发送
-    public function sendMessageToManager($findId)
+    //恢复订单
+    private function recoverFindcard($order)
     {
+        $uid = Db::name('findcard')->where('card_order',$order)->value('card_uid');
+        //查找是否有报警车辆但是还未支付的订单
+        $notPayFindcar =  Db::name('findcard')->where(['card_uid' => $uid, 'car_status' => 2])->field('find_id')->select();
+
+        if (count($notPayFindcar) == 0) {
+            //恢复订单
+            $res2 = Db::name('findcard')->where(['car_status' => 1, 'card_uid' => $uid, 'recycle' => 0])->update(['recycle' => 1]);
+        }
+    }
+
+    //支付成功后给大区经理发送消息(按地域筛选)
+    public function sendMessageToManager($findId=null)
+    {
+        $findId = $findId ? $findId : input('find_id');
         //获取订单的城市
+        $data = Db::name('findcard')
+            ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
+            ->where('find_id', $findId)
+            ->field('city, province, card_number')
+            ->find();
+
+        $city = $data['city'];
+        $province = $data['province'];
+        //识别机添加北京城市的时候没有区全部为北京市，联系识别机开发人员修改
+        // $cityId = Db::name('city')->where(['name' => $city, 'pid' => ['>', 0]])->find();
+
+        $cityId = Db::name('city')->where(['name' => $city])->value('id');
 
         //查找该城市的大区经理
+        $users = Db::name('user')->where(['proxy_city' => ['like', "%$cityId%"], 'role' => 1])->field('user_id, user_mobile')->select();
+        // var_dump($users);
 
         //给大区经理发送消息
+        if ($users) {
+            foreach ($users as $user) {
+                $this->sendMessage($user['user_id'], $data['card_number']);
+                $this->sendSms($user['user_mobile'], $data);
+            }
+        }
+    }
+
+    //支付成功后给大区经理发送消息(按识别机筛选)
+    public function sendMsgToManager($findId=null)
+    {
+        $findId = $findId ? $findId : input('find_id');
+
+        $data = Db::name('findcard')
+            ->join('cardata', 'np_findcard.card_cardata=np_cardata.car_id', 'left')
+            ->where('find_id', $findId)
+            ->field('machine_id, card_number')
+            ->find();
+
+        $uid = Db::name('machine')->where('id',$data['machine_id'])->value('uid');
+        $user = Db::name('user')->where('user_id', $uid)->field('user_id, user_mobile')->find();
+
+        if ($user) {
+            $this->sendMessage($user['user_id'], $data['card_number']);
+            $this->sendSms($user['user_mobile'], $data);
+        }
+
+    }
+
+    private function sendMessage($uid,$card_number)
+    {
+        $content = '您有新的车辆'.$card_number.'需要看护。';
+        $data = array(
+            'from_uid' => 0,
+            'uid' => $uid,
+            'content' => $content,
+            'to_usermobile' => 0,
+            'from_deleted' => 0,
+            'date' => time(),
+        );
+        $mid = Db::name('message')->insertGetId($data);
+
+        $insertOne = array(
+            'mid' => $mid,
+            'to_uid' => $uid,
+            'is_readed' => 0,
+            'is_deleted' => 1,
+        );
+
+        Db::name('mesreceiver')->insert($insertOne);
+    }
+
+    private function sendSms($mobile, $data){
+        $sms = new Sms();
+        $sms->nurseNotice($mobile, $data);
     }
 
 }

@@ -10,6 +10,7 @@
 // +----------------------------------------------------------------------
 
 $userconfig = require_once 'userconfig.php';
+$webconfig = require_once 'webconfig.php';
 $sysconfig = [
     // +----------------------------------------------------------------------
     // | 应用设置
@@ -273,7 +274,7 @@ $sysconfig = [
 
     //系统升级配置
     'system_up' => [
-        'findcard' => true,
+        'findcard' => false,
     ],
 ];
-return array_merge($sysconfig, $userconfig);
+return array_merge($sysconfig, $userconfig, $webconfig);

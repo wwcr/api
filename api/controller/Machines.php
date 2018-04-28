@@ -124,40 +124,52 @@ class Machines extends Action
         foreach ($data as $key => $value) {
             if ($value['car_card']) {
                 $formatData['list'][] = $value;
-                $formatData['car_card_list'][] = $value['car_card'];
+                // $formatData['car_card_list'][] = $value['car_card'];
+                $formatData['car_card_list'][] = $value['car_id'];
             }
         }
 
         $weekTime = time() - (7 * 24 * 60 * 60);
         $monthTime = time() - (30 * 24 * 60 *60);
+        $today = strtotime(date('Y-m-d',time())); //今天0点时间
 
         foreach ($formatData['list'] as $formatId => $data) {
             if(strtotime($data['car_addtime']) >= $weekTime) {
                 $formatData['week_list'][] = $data;
-                $formatData['car_card_weeklist'][] = $data['car_card'];
+                // $formatData['car_card_weeklist'][] = $data['car_card'];
+                $formatData['car_card_weeklist'][] = $data['car_id'];
             }
 
             if(strtotime($data['car_addtime']) >= $monthTime) {
                 $formatData['month_list'][] = $data;
-                $formatData['car_card_monthlist'][] = $data['car_card'];
+                // $formatData['car_card_monthlist'][] = $data['car_card'];
+                $formatData['car_card_monthlist'][] = $data['car_id'];
+            }
+
+            if(strtotime($data['car_addtime']) >= $today) {
+                $formatData['today_list'][] = $data;
+                $formatData['car_card_todaylist'][] = $data['car_id'];
             }
         }
 
-        // $formatData['total_find_num'] = $this->findCarStatistics($formatData['car_card_list']); //报警总数
-        // $formatData['week_find_num']  = $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
-        // $formatData['month_find_num'] = $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
+        $formatData['total_find_num'] = $this->findCarStatistics($formatData['car_card_list']); //报警总数
+        $formatData['today_find_num']  = $this->findCarStatistics($formatData['car_card_todaylist']); //当天天报警数
+        $formatData['week_find_num']  = $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
+        $formatData['month_find_num'] = $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
 
-        // $formatData['total_num'] = count($formatData['list']); //拍摄总数
-        // $formatData['week_num']  = count($formatData['week_list']); //近7天拍摄总数
-        // $formatData['month_num'] = count($formatData['month_list']); //近30天拍摄总数
+        $formatData['total_num'] = count($formatData['list']); //拍摄总数
+        $formatData['today_num']  = count($formatData['today_list']); //当天拍摄数量
+        $formatData['week_num']  = count($formatData['week_list']); //近7天拍摄总数
+        $formatData['month_num'] = count($formatData['month_list']); //近30天拍摄总数
 
-        $formatData['total_num']= $this->findCarStatistics($formatData['car_card_list']); //报警总数
-        $formatData['week_num']= $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
-        $formatData['month_num']= $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
+        // $formatData['total_num']= $this->findCarStatistics($formatData['car_card_list']); //报警总数
+        // $formatData['week_num']= $this->findCarStatistics($formatData['car_card_weeklist']); //近7天报警数
+        // $formatData['month_num']= $this->findCarStatistics($formatData['car_card_monthlist']); //近30天报警数
 
-        $formatData['total_find_num'] = count($formatData['list']); //拍摄总数
-        $formatData['week_find_num']  = count($formatData['week_list']); //近7天拍摄总数
-        $formatData['month_find_num'] = count($formatData['month_list']); //近30天拍摄总数
+        // $formatData['total_find_num'] = count($formatData['list']); //拍摄总数
+        // $formatData['today_num']  = count($formatData['today_list']); //当天拍摄数量
+        // $formatData['week_find_num']  = count($formatData['week_list']); //近7天拍摄总数
+        // $formatData['month_find_num'] = count($formatData['month_list']); //近30天拍摄总数
 
         return $formatData;
     }
@@ -168,7 +180,8 @@ class Machines extends Action
         $count = 0;
 
         foreach ($cards as $key => $card) {
-            $findcard = Db::name('findcard')->where('card_number',$card)->field('card_number')->find();
+            // $findcard = Db::name('findcard')->where('card_number',$card)->field('card_number')->find();
+            $findcard = Db::name('findcard')->where('card_cardata',$card)->field('card_number')->find();
 
             if ($findcard) {
                 $count++;

@@ -531,7 +531,7 @@ class Api extends Action
             ->join('cardata','np_cardata.car_id=np_findcard.card_cardata','left')
             ->where('find_id', $findId)
             ->find();
-        if ($findcarData['car_status'] >= 2 && $findcarData['car_status'] < 4 && $findcarData['pay_status'] == 2 && strtotime($findcarData['car_addtime']) > time()-24*60*60) {
+        if ($findcarData['car_status'] >= 2 && $findcarData['car_status'] < 4 && $findcarData['pay_status'] == 2 && strtotime($findcarData['car_addtime']) > time()-1*60*60) {
             $findcarData['isNurse'] = 'true';
         } else {
             $findcarData['isNurse'] = 'false';
@@ -539,9 +539,9 @@ class Api extends Action
 
         $user = Db::name('user')->where('user_id', $findcarData['card_uid'])->field('role')->find();
 
-        if ($user['role'] == 1) {
-            $findcarData['isNurse'] = 'false';
-        }
+        // if ($user['role'] == 1) {
+        //     $findcarData['isNurse'] = 'false';
+        // }
 
         if ($findcarData['pay_status'] == 2) {
             $findcarData['cardata'] = Db::name('cardata')->where('car_id', $findcarData['card_cardata'])->find();

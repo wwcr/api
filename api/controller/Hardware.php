@@ -103,20 +103,46 @@ class Hardware extends Action
                 }
             } else {
                 $time = strtotime($isCardata['car_addtime']);
+                $timeFormat = time() - $time;
+                $maxTime    = 86400;  //24小时
                 $findCard = Db::name('findcard')->where('card_number', input('card'))->find();
 
-                // 三个月之内 && （委单不存在 || 委单取消 ||  委单已找到）
-                if ((time() - $time) <= 7776000 && (!$findCard || $findCard['recycle'] ==2 || $findCard['car_status'] >1)) {
-                    $data = $this->insertData_new($insert);
+                // 24小时内 && 没有委单
+                if ($timeFormat <= $maxTime && !$findCard) {
                     self::AjaxReturn('', '该车牌已经添加成功');
-                } else {
-                    $data = $this->insertData_new($insert);
-                    if ($data) {
-                        self::AjaxReturn($data, '该车辆是在寻车辆，请完成以下操作。');
-                    } else {
-                        self::AjaxReturn('', '添加失败', 0);
-                    }
                 }
+
+                // 24小时内 && 存在取消的委单
+                if ($timeFormat <= $maxTime && $findCard['recycle'] ==0) {
+                    self::AjaxReturn('', '该车牌已经添加成功');
+                }
+
+                // 有委单但不是查找中状态
+                if ($findCard && $findCard['car_status'] != 1) {
+                    self::AjaxReturn('', '该车牌已经添加成功');
+                }
+
+                $data = $this->insertData_new($insert);
+
+                if ($data) {
+                    self::AjaxReturn($data, '该车辆是在寻车辆，请完成以下操作。');
+                } else {
+                    self::AjaxReturn('', '添加失败', 0);
+                }
+
+                // (一天之内 &&  委单已取消) && 委单已找到）
+                // $timeFormat = time() - $time;
+                // if (($timeFormat <= 86400 && (!$findCard || $findCard['recycle'] ==0)) || $findCard['car_status'] >1) {
+                //     // $data = $this->insertData_new($insert);
+                //     self::AjaxReturn('', '该车牌已经添加成功');
+                // } else {
+                //     $data = $this->insertData_new($insert);
+                //     if ($data) {
+                //         self::AjaxReturn($data, '该车辆是在寻车辆，请完成以下操作。');
+                //     } else {
+                //         self::AjaxReturn('', '添加失败', 0);
+                //     }
+                // }
             }
         } else {
             self::AjaxReturn('', '请求失败', 0);
@@ -236,20 +262,20 @@ class Hardware extends Action
         $today = strtotime(date('Y-m-d',time())); //今天0点时间
 
         foreach ($carData as $key => $data) {
-            $formatData['car_data']['car_card_list'][] = $data['car_card'];
+            $formatData['car_data']['car_card_list'][] = $data['car_id'];
             if(strtotime($data['car_addtime']) >= $weekTime) {
                 $formatData['car_data']['week_list'][] = $data;
-                $formatData['car_data']['car_card_weeklist'][] = $data['car_card'];
+                $formatData['car_data']['car_card_weeklist'][] = $data['car_id'];
             }
 
             if(strtotime($data['car_addtime']) >= $monthTime) {
                 $formatData['car_data']['month_list'][] = $data;
-                $formatData['car_data']['car_card_monthlist'][] = $data['car_card'];
+                $formatData['car_data']['car_card_monthlist'][] = $data['car_id'];
             }
 
             if(strtotime($data['car_addtime']) >= $today) {
                 $formatData['car_data']['today_list'][] = $data;
-                $formatData['car_data']['car_card_todaylist'][] = $data['car_card'];
+                $formatData['car_data']['car_card_todaylist'][] = $data['car_id'];
             }
         }
 
@@ -272,7 +298,9 @@ class Hardware extends Action
         $count = 0;
 
         foreach ($cards as $key => $card) {
-            $findcard = Db::name('findcard')->where('card_number',$card)->field('card_number')->find();
+            // $findcard = Db::name('findcard')->where('card_number',$card)->field('card_number')->find();
+            $findcard = Db::name('findcard')->where('card_cardata',$card)->field('card_number')->find();
+
 
             if ($findcard) {
                 $count++;

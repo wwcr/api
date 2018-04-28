@@ -52,9 +52,9 @@ class Toolure extends Action
     //普通的图片上传
     public function upload()
     {
-        // var_dump($_FILES);
-        $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
-        file_put_contents(dirname(__FILE__).'/uploadFile3.txt', json_encode($_FILES),FILE_APPEND);
+        // $fileName = $_SERVER['DOCUMENT_ROOT'];//测试服务器上传路径
+        $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr'; //服务器上传路径
+        file_put_contents(dirname(__FILE__).'/uploadFile8.txt', json_encode($_FILES),FILE_APPEND);
         if($_FILES){
             self::logger($_FILES,'提交的post流');
             $ext = explode('/',$_FILES['file']['type']);

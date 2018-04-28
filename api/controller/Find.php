@@ -32,8 +32,8 @@ class Find extends Action
         $status = input('status');
         $order_by = input('post.order_by');
         // echo $order_by;
-        // $where = ['car_status'=>$status,'card_uid'=>$this->uid,'pay_status'=>2, 'recycle'=>1];
-        $where = ['car_status'=>$status,'card_uid'=>$this->uid, 'recycle'=>1];
+        // $where = ['car_status'=>$status,'card_uid'=>$this->uid, 'recycle'=>1];
+        $where = ['car_status'=>$status,'card_uid'=>$this->uid];
         if($status ==3){
             $where = 'car_status >= 2 and card_uid='.$this->uid;
         }
