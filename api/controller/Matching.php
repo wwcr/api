@@ -65,7 +65,7 @@ class Matching extends Action
             ->where(['card_number'=>$hash])
             ->find();
 // var_dump($data);die;
-        if ($data['car_status'] >= 2) {
+        if ($data['car_status'] != 1 ) {
             return '';
         }
 

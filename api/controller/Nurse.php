@@ -125,7 +125,7 @@ class Nurse extends Action
         }
 
         // 大区经理列表(通过识别机筛选)
-        if (!config('managerCityProxy')) {
+        if ($switch == 'manager' && !config('managerCityProxy')) {
             $uid = input('uid');
 
             //获取该大区经理的识别机

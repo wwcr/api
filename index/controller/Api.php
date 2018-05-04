@@ -545,6 +545,9 @@ class Api extends Action
 
         if ($findcarData['pay_status'] == 2) {
             $findcarData['cardata'] = Db::name('cardata')->where('car_id', $findcarData['card_cardata'])->find();
+            $password = Db::name('gps')->where('account',$findcarData['cardata']['car_gps'])->value('password');
+            $findcarData['cardata']['car_gps'] = $findcarData['cardata']['car_gps'] . ' (个人登录)';
+            $findcarData['cardata']['car_gpspassword'] = $password ? $password :'暂无相匹配的GPS密码';
             $gps = $this->change_gps($findcarData['cardata']['car_location']);//通过高德的接口把位置名转换为坐标
             $gps = explode(',',$gps['geocodes'][0]['location']);
             $findcarData['cardata']['gpsdata'] = $gps;
@@ -644,6 +647,17 @@ class Api extends Action
     public function get_content_readnum(){//统计文章浏览次数
         $id = input('post.id');//接收文章id
         $data = Db::name('chatinfo')->where('id',$id)->update(['read_num' => ['exp','read_num+1']]);
+    }
+    public function get_content_detail(){//统计文章浏览次数
+        $id = input('post.id');//接收文章id
+        Db::name('chatinfo')->where('id',$id)->update(['read_num' => ['exp','read_num+1']]);
+        $data = Db::name('chatinfo')//总条数
+           ->alias('c')
+            ->join('user u','np_chatinfo.uid=np_user.user_id','left')
+            ->field('u.user_mobile,u.user_header,c.*')
+            ->where('id',$id)
+            ->select();
+        self::AjaxReturn($data,1);
     }
     public function get_all_contentlist(){
         $limit = input('limit');
