@@ -238,9 +238,17 @@ class Admin extends Action
     public function cardata()
     {
         $switch = input('switch');
+        $keyword = input('keyword');
+
         if ($switch == 'list') {
             $limit = input('limit', 10);
-            $list = Db::name('cardata')->order('car_id DESC')->paginate($limit);
+            if (!$keyword) {
+                $list = Db::name('cardata')->order('car_id DESC')->paginate($limit);
+            } else {
+                $where['car_card']  = ['like',"%$keyword%"];
+                $list = Db::name('cardata')->where($where)->order('car_id DESC')->paginate($limit);
+            }
+
             self::AjaxReturn($list);
         }
     }

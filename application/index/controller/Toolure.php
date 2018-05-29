@@ -8,7 +8,9 @@
 namespace app\index\controller;
 use app\api\module\sms;
 use think\Db;
-
+use OSS\Core\OssException;
+use OSS\OssClient;
+use think\Config;
 /** 工具类
  * Class Toolure
  * @package app\index\controller
@@ -22,7 +24,6 @@ class Toolure extends Action
     public function test(){
         echo 'test';
     }
-    //普通的图片上传
     public function upload()
     {
         // var_dump($_FILES);
@@ -37,17 +38,39 @@ class Toolure extends Action
                 $exter = 'png';
             }
             self::logger($ext,'后缀');
-            $path = '/public/uplaod/'.md5(time()).'-'.md5($_FILES['file']['name']).'.'.$exter;
+            $path = 'public/uplaod/'.md5(time()).'-'.md5($_FILES['file']['name']).'.'.$exter;
             // var_dump($_FILES);
             // var_dump($path);
-            $r = move_uploaded_file($_FILES['file']["tmp_name"],$fileName.$path);
-
-            if($r){
-                self::logger($path,'路径');
-                self::AjaxReturn($path,'上传成功');
+            $r = move_uploaded_file($_FILES['file']["tmp_name"],$fileName.'/'.$path);
+            // try {
+            $config = config('aliyun_oss'); //获取Oss的配置
+            // var_dump($config);die();
+            // 实例化对象 将配置传入
+            $ossClient = new OssClient($config['KeyId'], $config['KeySecret'], $config['Endpoint']);
+        //     //这里是有sha1加密 生成文件名 之后连接上后缀
+        //     // $fileName = sha1(date('YmdHis', time()) . uniqid()) . '.' . $resResult->type();
+        //     //执行阿里云上传 
+        	// $newpath = 'test/'.$path;
+            $result = $ossClient->uploadFile($config['Bucket'], $path, $path);
+            // $data['test'] = json_encode($result);
+            // $res = Db::name('test')->insert(['data'=>json_encode($result)]);
+            if($result['info']['url']){
+                 self::logger('/'.$path,'路径');
+                self::AjaxReturn('/'.$path,'上传成功');
             }else{
-                self::AjaxReturn($path,'上传失败',0);
+                self::AjaxReturn('/'.$path,'上传失败',0);
             }
+
+        // } catch (OssException $e) {
+        //     return $e->getMessage();
+        // }
+
+            // if($r){
+            //     self::logger('/'.$path,'路径');
+            //     self::AjaxReturn('/'.$path,'上传成功');
+            // }else{
+            //     self::AjaxReturn('/'.$path,'上传失败',0);
+            // }
         }else{
             //base64形式的图片上传
             $formFile = input('imgStr');
@@ -56,19 +79,85 @@ class Toolure extends Action
                 $ext = '.jpg';
                 $img = base64_decode($formFile[1]);//切割字符串得到图片base64编码
                 if ($formFile) {
-                    $path = '/public/uplaod/'.sha1(time()).'-'.uniqid().$ext;
-                    $put = file_put_contents($fileName.$path, $img);//返回的是字节数
-                    if($put){
-                        self::AjaxReturn($path,'上传成功');
-                    }else{
-                        self::AjaxReturn('','上传失败',0);
-                    }
+                    $path = 'public/uplaod/'.sha1(time()).'-'.uniqid().$ext;
+                    $put = file_put_contents($fileName.'/'.$path, $img);//返回的是字节数
+                     try {
+            $config = config('aliyun_oss'); //获取Oss的配置
+            // var_dump($config);die();
+            //实例化对象 将配置传入
+            $ossClient = new OssClient($config['KeyId'], $config['KeySecret'], $config['Endpoint']);
+            //这里是有sha1加密 生成文件名 之后连接上后缀
+            // $fileName = sha1(date('YmdHis', time()) . uniqid()) . '.' . $resResult->type();
+            //执行阿里云上传 
+            $result = $ossClient->uploadFile($config['Bucket'], $path, $path);
+            if($result['info']['url']){
+                // unlink($path);先不删除
+                self::AjaxReturn('/'.$path,'上传成功');
+            }else{
+                self::AjaxReturn('','上传失败',0);
+            }
+
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+                    // if($put){
+                    //     self::AjaxReturn($path,'上传成功');
+                    // }else{
+                    //     self::AjaxReturn('','上传失败',0);
+                    // }
                 }
             }else{
                 self::AjaxReturn('提交失败','',0);
             }
         }
     }
+    //普通的图片上传
+    // public function upload()
+    // {
+    //     // var_dump($_FILES);
+    //     $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr';
+    //     // file_put_contents(dirname(__FILE__).'/uploadFile22.txt', json_encode($_FILES),FILE_APPEND);
+    //     if($_FILES){
+    //         self::logger($_FILES,'提交的post流');
+    //         $ext = explode('/',$_FILES['file']['type']);
+    //         $exter = $ext[1];
+    //         // var_dump($exter);
+    //         if($ext[1] == 'octet-stream'){
+    //             $exter = 'png';
+    //         }
+    //         self::logger($ext,'后缀');
+    //         $path = '/public/uplaod/'.md5(time()).'-'.md5($_FILES['file']['name']).'.'.$exter;
+    //         // var_dump($_FILES);
+    //         // var_dump($path);
+    //         $r = move_uploaded_file($_FILES['file']["tmp_name"],$fileName.$path);
+
+    //         if($r){
+    //             self::logger($path,'路径');
+    //             self::AjaxReturn($path,'上传成功');
+    //         }else{
+    //             self::AjaxReturn($path,'上传失败',0);
+    //         }
+    //     }else{
+    //         //base64形式的图片上传
+    //         $formFile = input('imgStr');
+    //         if($formFile){
+    //             $formFile = explode(',', $formFile);
+    //             $ext = '.jpg';
+    //             $img = base64_decode($formFile[1]);//切割字符串得到图片base64编码
+    //             if ($formFile) {
+    //                 $path = '/public/uplaod/'.sha1(time()).'-'.uniqid().$ext;
+    //                 $put = file_put_contents($fileName.$path, $img);//返回的是字节数
+    //                 if($put){
+    //                     self::AjaxReturn($path,'上传成功');
+    //                 }else{
+    //                     self::AjaxReturn('','上传失败',0);
+    //                 }
+    //             }
+    //         }else{
+    //             self::AjaxReturn('提交失败','',0);
+    //         }
+    //     }
+    // }
       public function upload_contract()//合同
     {
             header("Access-Control-Allow-Origin:*");

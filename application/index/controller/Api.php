@@ -51,10 +51,6 @@ class Api extends Action
 
     public function car_pinggu()
     {
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
-        // $curl = new Curl();
         $pro_result = $this->province();
         $brand_result = $this->brand();
         $this->assign('province',$pro_result);
@@ -64,9 +60,6 @@ class Api extends Action
     public function province(){//获取车辆评估省份
         $curl = new Curl();
 //如果需要设置允许所有域名发起的跨域请求，可以使用通配符 *
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $url = "http://v.juhe.cn/usedcar/province";
         $params = array(
       "key" => $this->appkey,//应用APPKEY(应用详细页查询)
@@ -137,9 +130,6 @@ class Api extends Action
         }
     }
     public function city(){
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $curl = new Curl();
         $pid = input('post.id');
         $url = "http://v.juhe.cn/usedcar/city";
@@ -163,9 +153,6 @@ class Api extends Action
     }
     public function brand($type = 1){
         $curl = new Curl();
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
         $car_type = $type == 1 ? 'passenger' : 'commercial';
         $url = "http://v.juhe.cn/usedcar/brand";
         $params = array(
@@ -195,10 +182,7 @@ class Api extends Action
             echo "请求失败";
         }
     }
-     public function brandtest($type = 1){
-      // header("Access-Control-Allow-Origin:*");
-      //   header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-      //   header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+     public function brandtestbak($type = 1){
         $curl = new Curl();
         $car_type = $type == 1 ? 'passenger' : 'commercial';
         $url = "http://v.juhe.cn/usedcar/brand";
@@ -212,17 +196,7 @@ class Api extends Action
         $result = json_decode($content,true);
         if($result){
             if($result['error_code']=='0'){
-                // var_dump($result['result']['A']);
-                // var_dump($result);
                 echo json_encode($result['result']);
-                // $brand_result = array();
-                // foreach ($result['result'] as $key => $value) {
-
-                //     foreach ($value as $key1 => $value1) {
-                //         $brand_result[] = $value1;
-                //     }
-                // }
-                //  var_dump($brand_result);
             }else{
                 echo $result['error_code'].":".$result['reason'];
             }
@@ -230,14 +204,54 @@ class Api extends Action
             echo "请求失败";
         }
     }
-     public function series(){//车系
+    public function brand_update($type = 1){//更新品牌数据
         $curl = new Curl();
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
-        // $bid = 2000417;
-        $bid = input('post.id');
-        // echo $bid;
+        $car_type = $type == 1 ? 'passenger' : 'commercial';
+        $url = "http://v.juhe.cn/usedcar/brand";
+        $params = array(
+      "key" => $this->appkey,//应用APPKEY(应用详细页查询)
+      "dtype" => "",//返回数据的格式,xml或json，默认json
+      "vehicle" =>$car_type,//省份id(从“二手车价值评估/省份列表”接口获取)
+        );
+        $paramstring = http_build_query($params);
+        $content = $curl->juhecurl($url,$paramstring);
+        $result = json_decode($content,true);
+        if($result){
+            if($result['error_code']=='0'){
+            	echo '<pre>';
+            	// var_dump($result['result']);
+                foreach ($result['result'] as $key => $value) {
+                	$res = Db::name('brandlist')->insert(['letter'=>$key,'brand_list'=>json_encode($value)],$replace=true);//替换已存在数据
+                }
+            }else{
+                echo $result['error_code'].":".$result['reason'];
+            }
+        }else{
+            echo "请求失败";
+        }
+    }
+    public function brandtest($type = 1){//从自己数据库取出车辆品牌！！！！
+       $res = Db::name('brandlist')->select();
+       $data =[];
+       foreach ($res as $key => $value) {
+       	  foreach (json_decode($value['brand_list']) as $key1 => $value1) {
+       	  	$data[$value['letter']][$key1] = $value1;
+       	  }
+       }
+       echo json_encode($data);
+      
+    }
+    public function series_update($type = 1){//更新车系数据
+           $res = Db::name('brandlist')->select();
+           $res = collection($res)->toArray();
+	       foreach ($res as $key => $value) {
+	       	  foreach (json_decode($value['brand_list'],true) as $key1 => $value1) {
+	       	  	$this->seriesdata_get($value1['id']);
+	       	  }
+	       }
+    }
+    public function seriesdata_get($bid){//车系
+        $curl = new Curl();
         $url = "http://v.juhe.cn/usedcar/series";
         $params = array(
       "key" => $this->appkey,//应用APPKEY(应用详细页查询)
@@ -261,6 +275,43 @@ class Api extends Action
                         }
                     }
                 }
+             $res = Db::name('series')->insert(['bid'=>$bid,'series'=>json_encode($series_result)],$replace=true);//插入数据库
+            }else{
+                echo $result['error_code'].":".$result['reason'];
+            }
+        }else{
+            echo "请求失败";
+        }
+     }
+     public function seriesbak(){//车系
+        $curl = new Curl();
+        // $bid = 2000481;
+        $bid = input('post.id');
+        $url = "http://v.juhe.cn/usedcar/series";
+        $params = array(
+      "key" => $this->appkey,//应用APPKEY(应用详细页查询)
+      "dtype" => "",//返回数据的格式,xml或json，默认json
+      "method" => "",//固定值：getCarSeriesList
+      "brand" => $bid,//品牌标识，可以通过车三百品牌数据接口拿回所有的品牌信息，从而提取品牌标识。
+        );
+        $paramstring = http_build_query($params);
+        $content = $curl->juhecurl($url,$paramstring);
+        $result = json_decode($content,true);
+        if($result){
+            if($result['error_code']=='0'){
+                // echo json_encode($result['result']);
+                $series_result = array();
+                foreach ($result['result'] as $key => $value) {
+
+                    foreach ($value as $key1 => $value1) {
+                        // var_dump($value1['xilie']);
+                        foreach ($value1['xilie'] as $key2 => $value2) {
+                            $series_result[] = $value2;
+                        }
+                    }
+                }
+                // echo '<pre>';
+                // var_dump($series_result);
                 echo json_encode($series_result);
             }else{
                 echo $result['error_code'].":".$result['reason'];
@@ -269,11 +320,55 @@ class Api extends Action
             echo "请求失败";
         }
      }
-     public function car_list(){//车型列表
+     public function series(){//车系本地
+        $bid = input('post.id');
+        $res = Db::name('series')->where('bid',$bid)->select();
+        echo $res[0]['series'];
+     }
+      public function carlist_update($type = 1){//更新车系数据
+           $res = Db::name('series')->select();
+           $int = 0;
+	       foreach ($res as $key => $value) {
+	       	  foreach (json_decode($value['series'],true) as $key1 => $value1) {
+	       	  	$this->carlistdata_get($value1['xlid']);
+	       	  }
+	       }
+    }
+    public function carlistdata_get($sid){//车型列表
         $curl = new Curl();
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
+        $url = "http://v.juhe.cn/usedcar/car";
+        // $sid = input('post.id');
+         $params = array(
+          "key" => $this->appkey,//应用APPKEY(应用详细页查询)
+              "dtype" => "",//返回数据的格式,xml或json，默认json
+              "method" => "",//固定值：getCarModelList
+              "series" => $sid,//车系标识，可以通过车三百车系数据接口拿回车系信息，从而提前车系标识。
+        );
+        $paramstring = http_build_query($params);
+        $content = $curl->juhecurl($url,$paramstring);
+        $result = json_decode($content,true);
+        if($result){
+            if($result['error_code']=='0'){
+                // print_r($result);
+                $car_result = array();
+               foreach ($result['result'] as $key => $value) {
+                   foreach ($value as $key1=> $value1) {
+                      foreach($value1['chexing_list'] as $key2 => $value2){
+                        $car_result[] = $value2;
+                      }
+                   }
+               }
+               $res = Db::name('xl')->insert(['xlid'=>$sid,'carlist'=>json_encode($car_result)],$replace=true);//插入数据库
+               // echo json_encode($car_result);
+            }else{
+                echo $result['error_code'].":".$result['reason'];
+            }
+        }else{
+            echo "请求失败";
+        }
+     }
+     public function car_listbak(){//车型列表
+        $curl = new Curl();
         $url = "http://v.juhe.cn/usedcar/car";
         // $sid = 20000227;
         $sid = input('post.id');
@@ -304,6 +399,11 @@ class Api extends Action
         }else{
             echo "请求失败";
         }
+     }
+     public function car_list(){//车型列表
+        $xlid = input('post.id');
+        $res = Db::name('xl')->where('xlid',$xlid)->select();
+        echo $res[0]['carlist'];
      }
      public function car_year(){//车型列表
         // header("Access-Control-Allow-Origin:*");
@@ -403,9 +503,6 @@ class Api extends Action
     //     }
     // }
  		public function newwz_city(){//违章城市
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
      	  $curl = new Curl();
         $url = "http://v.juhe.cn/wz/citys";
         $params = 'key='.$this->wz_appkey.'&format=2';
@@ -430,9 +527,6 @@ class Api extends Action
         }
    	 }
     public function getwz_city(){//违章城市
-      // header("Access-Control-Allow-Origin:*");
-      //   header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-      //   header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
      	$res = Db::name('wzsearch')->order('pro_code')->select();
         $data = [];
         foreach ($res as $key => $value) {
@@ -471,21 +565,11 @@ class Api extends Action
    	 }
 
      public function peccancy(){//违章查询
-        // header("Access-Control-Allow-Origin:*");
-        // header("Access-Control-Allow-Headers:Origin, X-Requested-With, Content-Type, Accept,USER_ID,TOKEN");
-        // header("Access-Control-Allow-Methods:HEAD, GET, POST, DELETE, PUT, OPTIONS");
          $curl = new Curl();
         $url = "http://v.juhe.cn/wz/query";
         $city = input('post.city');
         $hphm = input('post.hphm');
         $engineno = input('post.engineno');
-        $classno = input('post.classno');
-        // $result = array();
-        // $result['city'] = $city;
-        // $result['hphm'] = $hphm;
-        // $result['engineno'] = $engineno;
-        // $result['classno'] = $classno;
-        // echo json_encode($result);
          $params = array(
           "key" => $this->wz_appkey,//应用APPKEY(应用详细页查询)
           "dtype" => "",//返回数据的格式,xml或json，默认jsont
@@ -545,9 +629,6 @@ class Api extends Action
 
         if ($findcarData['pay_status'] == 2) {
             $findcarData['cardata'] = Db::name('cardata')->where('car_id', $findcarData['card_cardata'])->find();
-            $password = Db::name('gps')->where('account',$findcarData['cardata']['car_gps'])->value('password');
-            $findcarData['cardata']['car_gps'] = $findcarData['cardata']['car_gps'] . ' (个人登录)';
-            $findcarData['cardata']['car_gpspassword'] = $password ? $password :'暂无相匹配的GPS密码';
             $gps = $this->change_gps($findcarData['cardata']['car_location']);//通过高德的接口把位置名转换为坐标
             $gps = explode(',',$gps['geocodes'][0]['location']);
             $findcarData['cardata']['gpsdata'] = $gps;
@@ -675,9 +756,9 @@ class Api extends Action
             ->field('u.user_mobile,u.user_header,c.*')
             ->limit($limit)
             ->select();
-            foreach ($data as $key => $value) {
-               $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
-            }
+            // foreach ($data as $key => $value) {
+            //    $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
+            // }
          self::AjaxReturn($data,$count);
     }
     public function get_single_contentlist(){
@@ -699,9 +780,9 @@ class Api extends Action
             ->where('uid',$uid)
             ->limit($limit)
             ->select();
-             foreach ($data as $key => $value) {
-               $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
-            }
+            //  foreach ($data as $key => $value) {
+            //    $data[$key]['content'] = $this->get_dirty($data[$key]['content']);
+            // }
          self::AjaxReturn($data,$count);
     }
     public function get_dirty($content){//获取脏字

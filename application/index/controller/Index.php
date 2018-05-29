@@ -29,10 +29,10 @@ class Index extends Action
         $this->deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
 
     }
-    public function index()
-    {
-        return view('./index/index.html');
-    }
+    // public function index()
+    // {
+    //     phpinfo();
+    // }
     public function admin(){
         return 'admin';
     }
@@ -40,9 +40,7 @@ class Index extends Action
         $this->redis->set('3123', 113,5);
     }
     public function test1111(){
-          echo $this->redis->get('daddad');
-          echo $this->redis->get('daddad')+1;
-          echo $this->redis->get('daddad')+1;
+          echo '我是猪';
     }
     public function get_banner(){
        $list = Db::name('banner')->select();

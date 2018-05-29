@@ -9,6 +9,8 @@
 namespace app\index\controller;
 
 use think\Controller;
+use \think\Request;
+use think\Db;
 
 class Action extends Controller
 {
@@ -19,10 +21,32 @@ class Action extends Controller
     public function __construct()
     {
         $this->uid = input('uid');
-        $this->token = input('token');
+        $currentToken = $this->token = input('token');
+        $configToken = config('apiToken');
+        $request = Request::instance();
+        $controller  = $request->controller();
+        $action  = $request->action();
+        $tokenSwitch = $configToken['switch'];
+        $c = in_array($controller, $configToken['controller']);
+        $a = in_array($action, $configToken['action']);
+
+        if ($tokenSwitch && $c && !$a) {
+            if ($this->uid) {
+                $user_token = Db::name('user')->where('user_id', input('uid'))->value('user_token');
+                $tokens = $configToken['value'] . '_' . $user_token;
+            } else {
+                $tokens = $configToken['value'];
+            }
+
+            if ($tokens != $currentToken) {
+                self::AjaxReturn('','权限不足',0);
+            }
+        }
+
         if($_POST) self::$repost = true;
         parent::__construct();
     }
+
 
     /** 返回状态到客户端
      * @param array  $data
