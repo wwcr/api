@@ -46,6 +46,17 @@ class Index extends Action
        $list = Db::name('banner')->select();
         self::AjaxReturn($list);
     }
+    public function get_banner_new(){
+       $list = Db::name('banner_list')->where('isdelete','neq',1)->select();
+        self::AjaxReturn($list);
+    }
+    public function get_banner_content(){
+        $id = input('post.id');
+       $list = Db::name('banner_list')->where('id',$id)->select();
+       // $list['content'] = htmlspecialchars($list['content']);
+       echo json_encode($list);
+        // self::AjaxReturn($list);
+    }
     public function qcode_join(){//加盟商验证码
         $mobile = input('mobile');
         $rands = rand(1000,9999);
@@ -101,6 +112,18 @@ class Index extends Action
         $count = count($allount);
         $list = Db::name('article')
             ->where('art_index=1')
+            ->limit($limit)
+            ->order('art_time DESC')
+            ->select();
+        self::AjaxReturn($list,$count);
+    }
+    public function indexArticle_page_new(){//重写文章分页
+        $limit = input('limit');
+        $page = input('page');
+        $allount = Db::name('article_list')->where('isdelete','neq',1)->select();
+        $count = count($allount);
+        $list = Db::name('article_list')
+            ->where('isdelete','neq',1)
             ->limit($limit)
             ->order('art_time DESC')
             ->select();
