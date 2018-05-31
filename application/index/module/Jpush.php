@@ -24,32 +24,36 @@ class Jpush extends Model
     /**
      * 推送所有人
      */
-        function notifyAllUser()
+    /*
+    $jpush_id  当前用户登陆设备的id
+    $big_text 发送的内容
+     */
+        function notifyAllUser($jpush_id,$big_text)
     {
         $client = new \JPush\Client('ee2df2ee4b65d3e3d934abe3', '8cf803d04debf20dd788c937');
-        $msg = array(
-            "extras" => array(
-                "name" => "sb-hongpeifeng",
-                "id"    => 1,
-                "idcard_no" => "41142419874562545",
-                "id_img" => "http://000.000.000.000:9090/uploads/20170619/2d9e87fe911f5aa1af80f7c29d13c332.jpg",
-                "rec_img" => "http://000.000.000.000:9090/uploads/20170619/3b9471fa251c837a437acc8259aeaf59.jpg",
-                "gate_addr" => "1"
-            )
-        );
+        // $msg = array(
+        //     "extras" => array(
+        //         "name" => "sb-hongpeifeng",
+        //         "id"    => 1,
+        //         "idcard_no" => "41142419874562545",
+        //         "id_img" => "http://000.000.000.000:9090/uploads/20170619/2d9e87fe911f5aa1af80f7c29d13c332.jpg",
+        //         "rec_img" => "http://000.000.000.000:9090/uploads/20170619/3b9471fa251c837a437acc8259aeaf59.jpg",
+        //         "gate_addr" => "1"
+        //     )
+        // );
         $result = $client->push()
         // ->addAllAudience() // 推送所有观众
          // ->addAllAudience(['registration_id'=>'1a0018970af4bef5c3f']) 
-         ->addRegistrationId('1a0018970af4bef5c3f')
-        ->setPlatform('all')
-        ->androidNotification($alert = '孙燕飞是傻子', [
-   'title' => '通知',
-   "builder_id" => 3, 
-   "style" =>1,  // 1,2,3
-   "alert_type" =>1, // -1 ~ 7
-   "big_text" =>"孙燕飞是傻子孙燕飞是傻子孙燕飞是傻子孙燕飞是傻子孙燕飞是傻子",
-])
-        ->send();
+            ->addRegistrationId($jpush_id)
+            ->setPlatform('all')
+            ->androidNotification($alert = '无维易寻', [
+                   'title' => '车辆找到通知',
+                   "builder_id" => 3, 
+                   "style" =>1,  // 1,2,3
+                   "alert_type" =>1, // -1 ~ 7
+                   "big_text" =>$big_text,
+                ])
+            ->send();
          $result_json = json_encode($result);
         // var_dump(json_decode($result_json, true));
         

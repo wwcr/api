@@ -10,6 +10,7 @@ use app\index\controller\Action;
 use app\index\module;
 use think\Db;
 use app\api\validate;
+use app\index\module\Jpush;//极光推送
 
 /**车联匹配
  * Class Matching
@@ -156,7 +157,16 @@ class Matching extends Action
 
             $sms = new Sms();
             $sms->MatchingSuccess($data['user_mobile'], $data);
-
+            $jpushid = Db::name('user')
+                ->where('user_mobile',$data['user_mobile'])
+                ->field('jpush')
+                ->find();
+                //调用极光推送
+            $jpush_data = '您所查找的车辆'.$findcard['card_number'].'位置已发送,请关注';//通知内容
+            if($jpushid['jpush']){
+                $jpush = new Jpush();
+                $jpush->notifyAllUser($jpushid['jpush'],$jpush_data);//极光
+            }
         } else {
             $data['type'] = 2;
         }

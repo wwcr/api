@@ -84,7 +84,7 @@ class Pay extends Action
         // $res = $pay->unifiedOrder(3133454536456131313);//统一下单
         $switch = input('post.switch');
         if ($switch == 'nurse') {
-             if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89){
+             if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89 || $userid == 188){
                 $total_fee = 1;
             }
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'nurse');//统一下单
@@ -92,7 +92,7 @@ class Pay extends Action
             // echo "<script> alert('系统升级中...'); </script>";die;
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'deposit');//统一下单
         } else {
-            if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89){
+            if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89 || $userid == 188){
                 $total_fee = 1;
             }
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单
@@ -140,14 +140,14 @@ class Pay extends Action
         $switch = input('post.switch');
 
         if ($switch == 'nurse') {//有空改in_array
-             if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89){
+             if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89 || $userid == 188){
                 $total_fee = 1;
             }
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'nurse');//统一下单
         } else if ($switch == 'deposit') {
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee,'deposit');//统一下单
         } else {
-             if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89){
+             if($userid == 102 || $userid == 44 || $userid == 31 || $userid == 144 || $userid == 42 || $userid == 98 || $userid == 86 || $userid == 30 || $userid == 101 || $userid == 137 || $userid == 151 || $userid == 89 || $userid == 188){
                 $total_fee = 1;
             }
             $res = $pay->unifiedOrder($out_trade_no,$type,$total_fee);//统一下单

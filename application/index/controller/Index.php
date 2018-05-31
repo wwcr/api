@@ -463,11 +463,11 @@ class Index extends Action
     public function login(){
         $nickname = input('username');
         $password = input('password');
-        if(input('jpushid')){
-            $info = Db::name('user')->where(['jpush'=>input('jpushid')])->update(['jpush' =>'']);
-            Db::name('user')->where(['user_mobile'=>$nickname])->update(['jpush' => input('jpushid')]);
-            $authRule = new Jpush();
-       $authRule->notifyAllUser();//极光
+        if(input('jpush')){//把用户当前设备jpushid和用户uid绑定
+            $info = Db::name('user')->where(['jpush'=>input('jpush')])->update(['jpush' =>'']);
+            Db::name('user')->where(['user_mobile'=>$nickname])->update(['jpush' => input('jpush')]);
+                // $jpush = new Jpush();
+                // $jpush->notifyAllUser(input('jpush'),'车辆已找到');//极光
         }
         $info = Db::name('user')->where(['user_mobile'=>$nickname])->find();
         if(!empty($info)){
@@ -641,6 +641,16 @@ class Index extends Action
         if($switch == 'content'){
             $list = Db::name('article')->where(['article_id'=>$id])
                 ->join('acate','np_acate.cate_id=np_article.art_cate')
+                ->find();
+            self::AjaxReturn($list);
+        }
+    }
+     public function article_new(){
+        $id = input('id');
+        $switch = input('swt');
+        if($switch == 'content'){
+            $list = Db::name('article_list')->where(['id'=>$id])
+                // ->join('acate','np_acate.cate_id=np_article.art_cate')
                 ->find();
             self::AjaxReturn($list);
         }
