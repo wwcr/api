@@ -10,6 +10,7 @@ use app\index\module\Jpush;
 use app\api\module\sms;
 use think\Cache;
 use think\Db;
+use think\Request;
 
 class Index extends Action
 {
@@ -29,10 +30,21 @@ class Index extends Action
         $this->deposit = Db::name('user')->where(['user_id' => $this->uid])->value('deposit');
 
     }
-    // public function index()
-    // {
-    //     phpinfo();
-    // }
+    public function check_sms($mobile,$ip)//检测请求次数
+    {
+       $res = Db::name('check')->where('mobile',$mobile)->select();//获取当前手机号所有请求记录
+       if(count($res) > 10){
+        return 'FAIL';
+       }
+       $res_ip = Db::name('check')->where('ip',$ip)->select();//获取当前ip所有请求记录
+       if(count($res_ip) > 10){
+        return 'FAIL';
+       }
+    }
+    public function clear_recode(){//清楚24小时之前的记录
+        $time=time()-24*3600;//获取24小时之前的时间戳  如果添加时间《 24小时之前的，此纪录删除，说明已过24H
+        Db::name('check')->where('get_time','<',$time)->delete();
+    }
     public function admin(){
         return 'admin';
     }
@@ -57,8 +69,15 @@ class Index extends Action
        echo json_encode($list);
         // self::AjaxReturn($list);
     }
-    public function qcode_join(){//加盟商验证码
+    public function qcode_4DZpLslB(){//加盟商验证码
         $mobile = input('mobile');
+        $this->clear_recode();//删除24小时之前的记录
+        $request = Request::instance();//实例化
+        $ip = $request->ip();
+        $get_num = $this->check_sms($mobile,$ip);//添加请求记录
+        if($get_num == 'FAIL'){
+            self::AjaxReturn('验证码发送失败',0,0);
+        }
         $rands = rand(1000,9999);
         $sms = new sms();
         $data = [
@@ -67,11 +86,17 @@ class Index extends Action
             'phone' =>$mobile,
             'sign'=>'无维科技'
         ];
-            if($sms->send($data)){
+        if($sms->send($data)){
+                $data=[
+                    'ip' => $ip,
+                    'mobile' => $mobile,
+                    'get_time' => time(),
+                ];
+                Db::name('check')->insert($data);
                 $this->redis->set($mobile, $rands,300);
                 self::AjaxReturn('验证码发送成功');
             }else{
-                self::AjaxReturnError('验证码发送失败');
+                self::AjaxReturn('验证码发送失败','0');
             }
     }
     public function join(){//加盟
