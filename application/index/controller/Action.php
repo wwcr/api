@@ -47,7 +47,17 @@ class Action extends Controller
         parent::__construct();
     }
 
-
+/*.........*/
+    public function proxy_get($uid){//连接代理的单独服务器
+        $res = Db::name('proxydb')->where('uid',$uid)->find();
+        if($res){
+            return $this->proxy_db($res['user'],$res['pas'],$res['ip'],$res['db']);
+        }
+    }
+    public function proxy_db($user,$pas,$ip,$db){//连接代理的单独服务器
+        $res = Db::connect('mysql://'.$user.':'.$pas.'@'.$ip.'/'.$db.'#utf8');
+        return $res;
+    }
     /** 返回状态到客户端
      * @param array  $data
      * @param string $info

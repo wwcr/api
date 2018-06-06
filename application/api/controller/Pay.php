@@ -383,6 +383,11 @@ class Pay extends Action
                         Db::startTrans();
                     try{
                         $res = Db::name('findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);//支付成功
+                        $uid = Db::name('findcard')->where('find_id',$out_trade_no)->value('card_uid');//获取UID
+                         $user_proxy = self::proxy_get($uid);//判断用户是否有自己的服务器，有就连接
+                         if($user_proxy){///
+                                $r1 = $user_proxy->name('np_findcard')->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);//获取ID
+                        }
                         if ($res) {
                             //消息通知
                             if (config('managerCityProxy')) {
@@ -444,6 +449,11 @@ class Pay extends Action
                         try{
                             $res = Db::name('pay')->where('pay_order',$out_trade_no)->update(['pay_status' => 2, 'pay_time' => time()]);//支付成功
                             $res2 = Db::name('findcard')->where('card_order',$out_trade_no)->update(['car_status' => 3]);//订单支付完成状态
+                            $uid = Db::name('findcard')->where('card_order',$out_trade_no)->value('card_uid');//获取UID
+                         $user_proxy = self::proxy_get($uid);//判断用户是否有自己的服务器，有就连接
+                         if($user_proxy){///
+                                $r1 = $user_proxy->name('np_findcard')->where('card_order',$out_trade_no)->update(['car_status' => 3]);//获取ID
+                        }
                             if ($res2) {
                                 //恢复订单
                                 $this->recoverFindcard($out_trade_no);
@@ -472,10 +482,12 @@ class Pay extends Action
          }
     }
     public function query_ordertest(){//查询订单
-        $out_trade_no = 140;
-        $pay = new Wechat();
-        $res = $pay->orderQuery($out_trade_no);
-        var_dump($res);
+         $uid = Db::name('findcard')->where('card_order',2018060448569799)->value('card_uid');//获取UID
+                         $user_proxy = self::proxy_get($uid);//判断用户是否有自己的服务器，有就连接
+                         var_dump($user_proxy);
+                        // if($user_proxy){///
+                        //         $r1 = $user_proxy->where('find_id',$out_trade_no)->update(['car_status' => 4, 'nurse_time' => time()]);//获取ID
+                        // }
     }
 
     //恢复订单

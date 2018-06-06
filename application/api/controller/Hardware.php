@@ -218,14 +218,28 @@ class Hardware extends Action
             self::AjaxReturn('添加失败', '', 0);
         }
     }
-
+    public function test(){
+        $uid = Db::name('machine')->where('id',99)->value('uid');//获取UID
+        var_dump($uid);
+        //  $user_proxy = self::proxy_get($uid);//判断用户是否有自己的服务器，有就连接
+        //  if($user_proxy){///
+        //         $insert['car_id'] = $car_id;
+        //         $r1 = $user_proxy->name('np_cardata')->insertGetId($insert);//获取ID
+        // }
+    }
     public function insertData_new($insert)
     {
-        $carId = Db::name('cardata')->insertGetId($insert);
+         $carId = Db::name('cardata')->insertGetId($insert);
+         $uid = Db::name('machine')->where('id',$insert['machine_id'])->value('uid');//获取UID
+         $user_proxy = self::proxy_get($uid);//判断用户是否有自己的服务器，有就连接
+         if($user_proxy){///
+                $insert['car_id'] = $car_id;
+                $r1 = $user_proxy->name('np_cardata')->insertGetId($insert);//获取ID
+        }
         if ($carId) {
             //更新匹配
             $math = new Matching($insert);
-            $result = $math->inits_new($insert['car_card'], $carId, $insert);
+            $result = $math->inits_new($insert['car_card'], $carId, $insert,$uid);
             //车牌匹配, 立刻返回结果
             $data['carId'] = $carId;
             $data['isFound'] = $result ? true : false;

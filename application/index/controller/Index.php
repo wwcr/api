@@ -347,6 +347,10 @@ class Index extends Action
             //更新数据
             if (input('find_id')) {
                 $res = Db::name('findcard')->where(['find_id'=>input('find_id')])->update($insert);
+                $user_proxy = self::proxy_get($this->uid);//判断用户是否有自己的服务器，有就连接
+                if($user_proxy){//
+                    $r1 = $user_proxy->name('np_findcard')->where(['find_id'=>input('find_id')])->update($insert);
+                }
                 if ($res) {
                     self::AjaxReturn($res,'提交成功',1);
                 }else {
@@ -361,6 +365,11 @@ class Index extends Action
                 Db::startTrans();//启动事务
             }
             $res = Db::name('findcard')->insertGetId($insert);
+            $user_proxy = self::proxy_get($this->uid);//判断用户是否有自己的服务器，有就连接
+            if($user_proxy){//
+                    $insert['find_id'] = $res;
+                    $r1 = $user_proxy->name('np_findcard')->insertGetId($insert);//获取ID
+                }
             if($res) {
                 $order = new order();
                 $order = $order->add(2,450,1,$type);
@@ -368,6 +377,9 @@ class Index extends Action
                     $update = Db::name('findcard')
                         ->where(['find_id'=>$res])
                         ->update(['card_order'=>$order]);
+                    if($user_proxy){//
+                     $user_proxy->name('np_findcard')->where(['find_id'=>$res])->update(['card_order'=>$order]);
+                    }
                     if ($excelData == null) {//phpexcel条件过滤
                         if($update){
                             Db::commit();

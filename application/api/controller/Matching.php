@@ -61,7 +61,7 @@ class Matching extends Action
         }
     }
 
-    public function inits_new($hash,$id, $data){
+    public function inits_new($hash,$id, $data,$uid){
         $data = Db::name('findcard')
             ->where(['card_number'=>$hash])
             ->find();
@@ -74,7 +74,13 @@ class Matching extends Action
             ->where(['card_number'=>$hash, 'recycle' => 1])
             ->order('card_addtime DESC')
             ->update(['card_cardata'=>$id]);
-
+        $user_proxy = self::proxy_get($uid);//判断用户是否有自己的服务器，有就连接
+         if($user_proxy){///
+            Db::name('findcard')
+            ->where(['card_number'=>$hash, 'recycle' => 1])
+            ->order('card_addtime DESC')
+            ->update(['card_cardata'=>$id]);
+        }
         // $order = Db::name('findcard')
         //     ->where(['card_number'=>$hash, 'recycle' => 1])
         //     ->order('card_addtime DESC')
@@ -153,6 +159,13 @@ class Matching extends Action
                 ->field('card_uid,card_number')
                 ->find();
 
+            $user_proxy = self::proxy_get($findcard['card_uid']);//判断用户是否有自己的服务器，有就连接
+             if($user_proxy){///
+                    $user_proxy->name('np_findcard')
+                    ->where(['card_number'=>$data['car_card'], 'recycle' => 1])
+                    ->order('card_addtime DESC')
+                    ->update(['car_status'=>2]);//获取ID
+            }
             $this->sendMessage($findcard['card_uid'], $findcard['card_number']);
 
             $sms = new Sms();
