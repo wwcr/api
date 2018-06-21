@@ -49,8 +49,8 @@ class Toolure extends Action
             $ossClient = new OssClient($config['KeyId'], $config['KeySecret'], $config['Endpoint']);
         //     //这里是有sha1加密 生成文件名 之后连接上后缀
         //     // $fileName = sha1(date('YmdHis', time()) . uniqid()) . '.' . $resResult->type();
-        //     //执行阿里云上传 
-        	// $newpath = 'test/'.$path;
+        //     //执行阿里云上传
+            // $newpath = 'test/'.$path;
             $result = $ossClient->uploadFile($config['Bucket'], $path, $path);
             // $data['test'] = json_encode($result);
             // $res = Db::name('test')->insert(['data'=>json_encode($result)]);
@@ -58,6 +58,7 @@ class Toolure extends Action
                  self::logger('/'.$path,'路径');
                 self::AjaxReturn('/'.$path,'上传成功');
             }else{
+                // var_dump($_FILES['file']['error']);die;
                 self::AjaxReturn('/'.$path,'上传失败',0);
             }
 
@@ -88,7 +89,7 @@ class Toolure extends Action
             $ossClient = new OssClient($config['KeyId'], $config['KeySecret'], $config['Endpoint']);
             //这里是有sha1加密 生成文件名 之后连接上后缀
             // $fileName = sha1(date('YmdHis', time()) . uniqid()) . '.' . $resResult->type();
-            //执行阿里云上传 
+            //执行阿里云上传
             $result = $ossClient->uploadFile($config['Bucket'], $path, $path);
             if($result['info']['url']){
                 // unlink($path);先不删除
@@ -108,6 +109,32 @@ class Toolure extends Action
                 }
             }else{
                 self::AjaxReturn('提交失败','',0);
+            }
+        }
+    }
+
+    public function uploadExcel()
+    {
+        $fileName = $_SERVER['DOCUMENT_ROOT'].'/wwcr'; //服务器上传路径
+        // var_dump($file);die;
+// dump($_FILES['file']['error']);die;
+        if($_FILES){
+            $ext = explode('.',$_FILES['file']['name']);
+            $exter = $ext[1];
+            $allowExter = ['xlsx', 'xls'];
+
+            if(!in_array($exter, $allowExter)){
+                self::AjaxReturn($exter,'上传文件格式不正确',0);
+            }
+
+            $path = '/public/uplaod/'.md5(time()).'-'.md5($_FILES['file']['name']).'.'.$exter;
+            // var_dump($_FILES['file']["tmp_name"]);die;
+            $r = move_uploaded_file($_FILES['file']["tmp_name"],$fileName.$path);
+            if($r){
+                self::logger($path,'路径');
+                self::AjaxReturn($path,'上传成功');
+            }else{
+                self::AjaxReturn($path,'上传失败',0);
             }
         }
     }

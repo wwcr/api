@@ -44,6 +44,23 @@ class Admin extends Action
         }
     }
 
+    public function loginManage(){
+        $nickname = input('username');
+        $password = input('password');
+        $info = Db::name('user')->where(['user_mobile'=>$nickname])->find();
+        if(!empty($info)){
+            if($info['user_password'] == md5(sha1($password))){
+                session('userinfo',$info);
+                cookie('userId', $info['user_id']);
+                self::AjaxReturn($info,'登陆成功');
+            }else{
+                self::AjaxReturn('用户名或者密码错误','',0);
+            }
+        }else{
+            self::AjaxReturn('用户不存在','',0);
+        }
+    }
+
     //新增分类
     public function addcate()
     {
@@ -155,9 +172,29 @@ class Admin extends Action
     {
         $switch = input('switch');
         $list = [];
+        $uid = input('uid');
+        $carStatus = input('car_status');
+        $keyword = input('keyword');
+// dump($keyword);die;
+        if ($uid) {
+            $where['card_uid'] = $uid;
+        }
+
+        if ($carStatus) {
+            $where['car_status'] = $carStatus;
+            // if ($carStatus == 2) {
+            //     $where['car_status'] = ['in', "(2, 3)"];
+            // }
+        }
+
+        if ($keyword) {
+            $where['card_number'] = ['like', "%$keyword%"];
+        }
+
         if ($switch == 'list') {
             $list = Db::name('findcard')
-                ->join('user', 'np_user.user_id=np_findcard.card_uid')
+                ->join('user', 'np_user.user_id=np_findcard.card_uid' , 'left')
+                ->where($where)
                 ->order('find_id DESC')
                 ->paginate(10);
         }

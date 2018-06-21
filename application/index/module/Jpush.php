@@ -46,16 +46,17 @@ class Jpush extends Model
          // ->addAllAudience(['registration_id'=>'1a0018970af4bef5c3f'])
             ->addRegistrationId($jpush_id)
             ->setPlatform('all')
-            ->androidNotification($alert = $big_text, [
-                   'title' => '无维易寻',
-                   "builder_id" => 2,
+            ->androidNotification($alert = '车辆通知', [
+                   'title' => '无维易寻', //标题
+                   "builder_id" => 3,
                    "style" =>1,  // 1,2,3
-                   "alert_type" =>-1, // -1 ~ 7
+                   "alert_type" =>1, // -1 ~ 7
                    "big_text" =>$big_text,
                 ])
             ->send();
          $result_json = json_encode($result);
         // var_dump(json_decode($result_json, true));
+
     }
 
 /**
